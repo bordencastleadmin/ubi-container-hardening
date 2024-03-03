@@ -35,7 +35,7 @@ jobs:
       with:
         image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
         path: /root/SCC/Sessions
-        destination: "openkdk-scap-output"
+        destination: "openjdk-scap-output"
     - name: Upload Scap Results
       uses: actions/upload-artifact@v4
       with:
