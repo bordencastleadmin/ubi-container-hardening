@@ -1,0 +1,129 @@
+name: Build and Test UBI8 Openjdk 17 Image
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+env:
+  CONTAINER_TAG: "ubi8"
+  CONTAINER_MAJOR_VERSION: "openjdk"
+  CONTAINER_MINOR_VERSION: "17"
+jobs:
+
+  build-test-push-openjdk17-image:
+    
+    runs-on: ubuntu-latest
+    steps:
+    #The formatting on this first line might be different for the CONTAINER_VERSION_TAG, but hopefully the rest is standard and can be copied and pasted as needed for follow on container builds.
+    - uses: actions/checkout@v4
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile.ubi8-openjdk17 --build-arg CONTAINER_VERSION_TAG="${{env.CONTAINER_TAG}}/${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}"
+    - name: Vulnerability scan image
+      id: scan
+      uses: anchore/scan-action@v3
+      with:
+        image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}"
+        only-fixed: true  
+        severity-cutoff: critical
+    - name: Upload Vulnerability Scan
+      uses: github/codeql-action/upload-sarif@v3
+      continue-on-error: true
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif }}
+    - name: DoD Scap Scan
+      run: docker build . --file Dockerfile.scap --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
+    - uses: shrink/actions-docker-extract@v3
+      id: "extract-scap"
+      with:
+        image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
+        path: /root/SCC/Sessions
+        destination: "${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}}-scap-output"
+    - name: Upload Scap Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: "${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}} DoD SCAP Scan Results"
+        path: "${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}}-scap-output"
+    - name: RunInspec Scan
+      run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
+      continue-on-error: true
+    - name: ExtractInspec Results
+      uses: shrink/actions-docker-extract@v3
+      id: "extract-inspec"
+      with:
+        image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
+        path: /tmp/junit.xml
+        destination: "${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}}-inspec-output"
+    - name: PublishInspec Test Results
+      uses: EnricoMi/publish-unit-test-result-action/linux@v2
+      if: always()
+      with:
+        files: |
+          "${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}}-inspec-output/junit.xml
+    - name: UploadInspec output
+      uses: actions/upload-artifact@v4
+      with:
+        name: "${{env.CONTAINER_TAG}} ${{env.CONTAINER_VERSION}}Inspec Scan Results"
+        path: "${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}}-inspec-output"
+
+  build-test-push-jenkins-image:
+    env:
+      JENKINS_TAG: "jenkins"
+      JENKINS_VERSION: "2.440.1"
+    runs-on: ubuntu-latest
+    needs: build-test-push-openjdk17-image
+    steps:
+    - uses: actions/checkout@v4
+    - name: Clone Jenkins repository
+      run: git clone --branch ${JENKINS_VERSION} https://github.com/jenkinsci/docker.git
+    - name: Copy the Dockerfile.jenkins into the repo
+      run: cp ./Dockerfile.jenkins ./docker/Dockerfile
+    - name: Docker login
+      run: echo ${{secrets.DOCKER_PASSWORD}} | docker login -u ${{secrets.DOCKER_USERNAME}} --password-stdin
+    - name: Build the Docker image
+      working-directory: ./docker
+      run: docker build --build-arg JENKINS_VERSION=${{env.JENKINS_VERSION}}  --build-arg TARGETARCH=amd64 --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" .
+    - name: Vulnerability scan image
+      id: scan
+      uses: anchore/scan-action@v3
+      with:
+        image: "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}"
+        only-fixed: true  
+        severity-cutoff: critical
+        fail-build: false
+    - name: Upload Vulnerability Scan
+      uses: github/codeql-action/upload-sarif@v3
+      continue-on-error: true
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif }}
+    - name: DoD Scap Scan
+      run: docker build . --file Dockerfile.scap --build-arg CONTAINER="localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
+    - uses: shrink/actions-docker-extract@v3
+      id: "extract-scap"
+      with:
+        image: "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-scap"
+        path: /root/SCC/Sessions
+        destination: "${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-scap-output"
+    - name: Upload Scap Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: "${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}} DoD SCAP Scan Results"
+        path: "${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-scap-output"
+    - name: RunInspec Scan
+      run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
+      continue-on-error: true
+    - name: ExtractInspec Results
+      uses: shrink/actions-docker-extract@v3
+      id: "extract-inspec"
+      with:
+        image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
+        path: /tmp/junit.xml
+        destination: "${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-inspec-output"
+    - name: PublishInspec Test Results
+      uses: EnricoMi/publish-unit-test-result-action/linux@v2
+      if: always()
+      with:
+        files: |
+          "${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-inspec-output/junit.xml
+    - name: UploadInspec output
+      uses: actions/upload-artifact@v4
+      with:
+        name: "${{env.CONTAINER_TAG}} ${{env.CONTAINER_VERSION}}Inspec Scan Results"
+        path: "${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-inspec-output"
