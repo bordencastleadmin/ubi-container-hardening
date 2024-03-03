@@ -10,6 +10,7 @@ jobs:
 
   build-test-push-openjdk17-image:
     
+        
     runs-on: ubuntu-latest
     steps:
     #The formatting on this first line might be different for the CONTAINER_VERSION_TAG, but hopefully the rest is standard and can be copied and pasted as needed for follow on container builds.
@@ -17,7 +18,7 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file Dockerfile.ubi8-openjdk17 --build-arg CONTAINER_VERSION_TAG="${{env.CONTAINER_TAG}}/${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}"
     - name: Vulnerability scan image
-      id: scan
+      id: openjdk-scan
       uses: anchore/scan-action@v3
       with:
         image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}"
@@ -27,41 +28,40 @@ jobs:
       uses: github/codeql-action/upload-sarif@v3
       continue-on-error: true
       with:
-        sarif_file: ${{ steps.scan.outputs.sarif }}
+        sarif_file: ${{ steps.openjdk-scan.outputs.sarif }}
     - name: DoD Scap Scan
       run: docker build . --file Dockerfile.scap --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
     - uses: shrink/actions-docker-extract@v3
-      id: "extract-scap"
+      id: "openjdk-extract-scap"
       with:
         image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
         path: /root/SCC/Sessions
-        destination: "${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}}-scap-output"
+        destination: "openjdk-scap-output"
     - name: Upload Scap Results
       uses: actions/upload-artifact@v4
       with:
-        name: "${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}} DoD SCAP Scan Results"
-        path: "${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}}-scap-output"
+        name: "Openjdk DoD SCAP Scan Results"
+        path: "openjdk-scap-output"
     - name: RunInspec Scan
       run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
       continue-on-error: true
     - name: ExtractInspec Results
       uses: shrink/actions-docker-extract@v3
-      id: "extract-inspec"
+      id: openjdk-extract-inspec
       with:
         image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
         path: /tmp/junit.xml
-        destination: "${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}}-inspec-output"
+        destination: openjdk-inspec-output
     - name: PublishInspec Test Results
       uses: EnricoMi/publish-unit-test-result-action/linux@v2
-      if: always()
       with:
         files: |
-          "${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}}-inspec-output/junit.xml
+          openjdk-inspec-output/junit.xml
     - name: UploadInspec output
       uses: actions/upload-artifact@v4
       with:
-        name: "${{env.CONTAINER_TAG}} ${{env.CONTAINER_VERSION}}Inspec Scan Results"
-        path: "${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}}-inspec-output"
+        name: Openjdk Inspec Scan Results
+        path: openjdk-inspec-output
     - name: Tag the docker image
       run: |
         docker tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" "${{secrets.DOCKER_USERNAME}}/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-latest"
