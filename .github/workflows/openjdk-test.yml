@@ -8,7 +8,7 @@ env:
   CONTAINER_MINOR_VERSION: "17"
 jobs:
 
-  build-test-push-openjdk17-image:
+  build-test-openjdk17-image:
     
     runs-on: ubuntu-latest
     steps:
@@ -62,7 +62,7 @@ jobs:
         name: Openjdk Inspec Scan Results
         path: openjdk-inspec-output
 
-  build-test-push-jenkins-image:
+  build-test-jenkins-image:
     env:
       JENKINS_TAG: "jenkins"
       JENKINS_VERSION: "2.440.1"
