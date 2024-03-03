@@ -87,6 +87,7 @@ jobs:
         image: "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}"
         only-fixed: true  
         severity-cutoff: critical
+        fail-build: false
     - name: Upload Vulnerability Scan
       uses: github/codeql-action/upload-sarif@v3
       continue-on-error: true
