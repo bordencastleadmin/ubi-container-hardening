@@ -9,7 +9,7 @@ env:
   CONTAINER_MINOR_VERSION: "9"
 jobs:
 
-  build-test-push-ubi8-image:
+  build-test-ubi8-image:
     
     runs-on: ubuntu-latest
     steps:
