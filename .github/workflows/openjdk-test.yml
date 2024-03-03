@@ -46,21 +46,21 @@ jobs:
       continue-on-error: true
     - name: ExtractInspec Results
       uses: shrink/actions-docker-extract@v3
-      id: "openjdk-extract-inspec"
+      id: openjdk-extract-inspec
       with:
         image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
         path: /tmp/junit.xml
-        destination: "openjdk-inspec-output"
+        destination: openjdk-inspec-output
     - name: PublishInspec Test Results
       uses: EnricoMi/publish-unit-test-result-action/linux@v2
       with:
         files: |
-          "openjdk-inspec-output/junit.xml
+          openjdk-inspec-output/junit.xml
     - name: UploadInspec output
       uses: actions/upload-artifact@v4
       with:
-        name: Openjdk Inspec Scan Results"
-        path: "openjdk-inspec-output"
+        name: Openjdk Inspec Scan Results
+        path: openjdk-inspec-output
 
   build-test-push-jenkins-image:
     env:
