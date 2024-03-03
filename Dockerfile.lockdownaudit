@@ -1,0 +1,16 @@
+ARG CONTAINER
+
+FROM ${CONTAINER}
+
+USER root
+WORKDIR /tmp
+RUN dnf install git -y
+RUN curl -L https://github.com/goss-org/goss/releases/latest/download/goss-linux-amd64 -o /usr/local/bin/goss \
+  && chmod +rx /usr/local/bin/goss \
+  && curl -L https://github.com/goss-org/goss/releases/latest/download/dgoss -o /usr/local/bin/dgoss \
+  && git clone https://github.com/ansible-lockdown/RHEL8-STIG-Audit.git \
+  && chmod +rx /usr/local/bin/dgoss
+COPY goss.yml /tmp/RHEL8-STIG-Audit/goss.yml
+
+WORKDIR /tmp/RHEL8-STIG-Audit
+RUN /usr/local/bin/goss --vars /tmp/RHEL8-STIG-Audit/vars/STIG.yml -g /tmp/RHEL8-STIG-Audit/goss.yml validate

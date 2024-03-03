@@ -1,0 +1,67 @@
+# InSpec Tests that are known to consistently have long run times can be disabled with this attribute
+# Acceptable values: false, true
+# (default: false)
+disable_slow_controls: false
+ 
+# Flag to designate if the target is a container host. (true or false)
+container_host: true
+ 
+# Main grub boot config file (String) 
+# grub_uefi_main_cfg: ""
+ 
+# Grub boot config files (Array of strings)
+#grub_uefi_user_boot_files: ""
+ 
+# Users exempt from home directory-based controls in array format
+#exempt_home_users: []
+ 
+# These shells do not allow a user to login
+#non_interactive_shells: []
+ 
+# System accounts that support approved system activities. (Array) (defaults shown below)
+#known_system_accounts: []
+ 
+# Accounts of known managed users (Array)
+#user_accounts: []
+ 
+# Main grub boot config file (String)
+# grub_main_cfg: ""
+ 
+# Grub boot config files (Array of Strings)
+# grub_user_boot_files: ""
+ 
+# Set to 'true' if IPv4 is enabled on the system. (default true)
+ipv4_enabled: true
+ 
+# Set to 'true' if IPv6 is enabled on the system.(default true)
+ipv6_enabled: false
+ 
+# Device or system does not have a camera installed. (default true)
+camera_installed: false
+ 
+# Device or operating system has a Bluetooth adapter installed. (default true)
+bluetooth_installed: false
+ 
+# Smart card status (enabled or disabled) default: 'enabled'
+smart_card_status: disabled
+ 
+# Name of tool
+#file_integrity_tool: 'aide'
+ 
+# Timeserver used in /etc/chromy.conf (String)
+#authoritative_timeserver:
+ 
+# File systems that don't correspond to removable media
+#non_removable_media_fs: []
+ 
+# List of full paths to private key files on the system (Array)
+#private_key_files:
+ 
+# Path to an accepted trust anchor certificate file (DoD) (String)
+#root_ca_file:
+ 
+# Temporary user accounts (Array)
+#temporary_accounts:
+ 
+# Documented tally log directory (String)
+#log_directory:
