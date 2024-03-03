@@ -1,4 +1,5 @@
 name: Build, Test, and Push UBI 8.9 Image
+on:
   pull_request:
     types: [opened, synchronize, reopened]
     
