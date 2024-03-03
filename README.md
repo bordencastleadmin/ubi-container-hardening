@@ -1,4 +1,4 @@
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=bordenit_ubi8-container-hardening&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=bordenitllc_ubi-container-hardening)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=bordenitllc_ubi8-container-hardening&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=bordenitllc_ubi-container-hardening)
 
 
 # REPO GOALS
