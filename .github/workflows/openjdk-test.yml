@@ -1,4 +1,4 @@
-name: Build, Test, and Push UBI8 Openjdk 17 Image
+name: Build and Test UBI8 Openjdk 17 Image
 on:
   pull_request:
     types: [opened, synchronize, reopened]
