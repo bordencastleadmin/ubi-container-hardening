@@ -51,10 +51,9 @@ jobs:
       with:
         image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
         path: /tmp/junit.xml
-        destination: "ubi8-inspec-output"
+        destination: ubi8-inspec-output
     - name: PublishInspec Test Results
       uses: EnricoMi/publish-unit-test-result-action/linux@v2
-      if: always()
       with:
         files: |
           "ubi8-inspec-output/junit.xml"
@@ -62,4 +61,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: "UBI8 Inspec Scan Results"
-        path: "ubi8-inspec-output"
+        path: ubi8-inspec-output
