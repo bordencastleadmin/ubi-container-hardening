@@ -67,7 +67,7 @@ jobs:
       JENKINS_TAG: "jenkins"
       JENKINS_VERSION: "2.440.1"
     runs-on: ubuntu-latest
-    needs: build-test-push-openjdk17-image
+    needs: build-test-openjdk17-image
     steps:
     - uses: actions/checkout@v4
     - name: Clone Jenkins repository
