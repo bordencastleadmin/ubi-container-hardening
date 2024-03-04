@@ -115,9 +115,9 @@ jobs:
       uses: EnricoMi/publish-unit-test-result-action/linux@v2
       with:
         files: |
-          "jenkins-inspec-output/junit.xml"
+          jenkins-inspec-output/junit.xml
     - name: UploadInspec output
       uses: actions/upload-artifact@v4
       with:
         name: "Jenkins Inspec Scan Results"
-        path: "jenkins-inspec-output"
+        path: jenkins-inspec-output
