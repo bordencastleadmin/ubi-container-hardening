@@ -56,7 +56,7 @@ jobs:
       uses: EnricoMi/publish-unit-test-result-action/linux@v2
       with:
         files: |
-          "ubi8-inspec-output/junit.xml"
+          ubi8-inspec-output/junit.xml
     - name: UploadInspec output
       uses: actions/upload-artifact@v4
       with:
