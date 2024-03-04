@@ -9,7 +9,6 @@ env:
 jobs:
 
   build-test-push-openjdk17-image:
-  
     runs-on: ubuntu-latest
     steps:
     #The formatting on this first line might be different for the CONTAINER_VERSION_TAG, but hopefully the rest is standard and can be copied and pasted as needed for follow on container builds.
