@@ -15,7 +15,7 @@ jobs:
     #The formatting on this first line might be different for the CONTAINER_VERSION_TAG, but hopefully the rest is standard and can be copied and pasted as needed for follow on container builds.
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file Dockerfile.ubi8-openjdk17 --build-arg CONTAINER_VERSION_TAG="${{env.CONTAINER_TAG}}/${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}"
+      run: docker build . --no-cache --file Dockerfile.ubi8-openjdk17 --build-arg CONTAINER_VERSION_TAG="${{env.CONTAINER_TAG}}/${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}"
     - name: Vulnerability scan image
       id: openjdk-scan
       uses: anchore/scan-action@v3
@@ -28,7 +28,7 @@ jobs:
       with:
         sarif_file: ${{ steps.openjdk-scan.outputs.sarif }}
     - name: DoD Scap Scan
-      run: docker build . --file Dockerfile.scap --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
+      run: docker build . --no-cache --file Dockerfile.scap --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
     - uses: shrink/actions-docker-extract@v3
       id: "openjdk-extract-scap"
       with:
@@ -41,7 +41,7 @@ jobs:
         name: "Openjdk DoD SCAP Scan Results"
         path: "openjdk-scap-output"
     - name: RunInspec Scan
-      run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
+      run: docker build . --no-cache --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
     - name: ExtractInspec Results
       uses: shrink/actions-docker-extract@v3
       id: openjdk-extract-inspec
@@ -76,7 +76,7 @@ jobs:
       run: echo ${{secrets.DOCKER_PASSWORD}} | docker login -u ${{secrets.DOCKER_USERNAME}} --password-stdin
     - name: Build the Docker image
       working-directory: ./docker
-      run: docker build --build-arg JENKINS_VERSION=${{env.JENKINS_VERSION}}  --build-arg TARGETARCH=amd64 --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" .
+      run: docker build --no-cache --build-arg JENKINS_VERSION=${{env.JENKINS_VERSION}}  --build-arg TARGETARCH=amd64 --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" .
     - name: Vulnerability scan image
       id: jenkins-scan
       uses: anchore/scan-action@v3
@@ -90,7 +90,7 @@ jobs:
       with:
         sarif_file: ${{ steps.jenkins-scan.outputs.sarif }}
     - name: DoD Scap Scan
-      run: docker build . --file Dockerfile.scap --build-arg CONTAINER="localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-scap"
+      run: docker build . --no-cache --file Dockerfile.scap --build-arg CONTAINER="localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-scap"
     - uses: shrink/actions-docker-extract@v3
       id: "jenkins-extract-scap"
       with:
@@ -103,7 +103,7 @@ jobs:
         name: "Jenkins DoD SCAP Scan Results"
         path: jenkins-scap-output
     - name: RunInspec Scan
-      run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-inspec"
+      run: docker build . --no-cache --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-inspec"
     - name: ExtractInspec Results
       uses: shrink/actions-docker-extract@v3
       id: "jenkins-extract-inspec"
