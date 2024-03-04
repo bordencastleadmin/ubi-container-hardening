@@ -16,7 +16,7 @@ jobs:
      #The formatting on this first line might be different for the CONTAINER_VERSION_TAG, but hopefully the rest is standard and can be copied and pasted as needed for follow on container builds.
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file Dockerfile.ubi8 --build-arg CONTAINER_VERSION_TAG="${{env.CONTAINER_TAG}}:${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}"
+      run: docker build . --no-cache --file Dockerfile.ubi8 --build-arg CONTAINER_VERSION_TAG="${{env.CONTAINER_TAG}}:${{env.CONTAINER_MAJOR_VERSION}}.${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}"
     - name: Vulnerability scan image
       id: ubi8-scan
       uses: anchore/scan-action@v3
@@ -30,7 +30,7 @@ jobs:
       with:
         sarif_file: ${{ steps.ubi8-scan.outputs.sarif }}
     - name: DoD Scap Scan
-      run: docker build . --file Dockerfile.scap --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
+      run: docker build . --no-cache --file Dockerfile.scap --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
     - uses: shrink/actions-docker-extract@v3
       id: "ubi8-extract-scap"
       with:
@@ -43,7 +43,7 @@ jobs:
         name: "UBI8 DoD SCAP Scan Results"
         path: "ubi8-scap-output"
     - name: RunInspec Scan
-      run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
+      run: docker build . --no-cache --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
       continue-on-error: true
     - name: Extract Inspec Results
       uses: shrink/actions-docker-extract@v3
