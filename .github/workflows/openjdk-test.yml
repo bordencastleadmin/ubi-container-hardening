@@ -96,12 +96,12 @@ jobs:
       with:
         image: "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-scap"
         path: /root/SCC/Sessions
-        destination: jenkins-scap-output"
+        destination: jenkins-scap-output
     - name: Upload Scap Results
       uses: actions/upload-artifact@v4
       with:
         name: "Jenkins DoD SCAP Scan Results"
-        path: "jenkins-scap-output"
+        path: jenkins-scap-output
     - name: RunInspec Scan
       run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-inspec"
     - name: ExtractInspec Results
@@ -110,12 +110,12 @@ jobs:
       with:
         image: "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-inspec"
         path: /tmp/junit.xml
-        destination: "jenkins-inspec-output"
+        destination: jenkins-inspec-output
     - name: PublishInspec Test Results
       uses: EnricoMi/publish-unit-test-result-action/linux@v2
       with:
         files: |
-          "jenkins-inspec-output/junit.xml
+          "jenkins-inspec-output/junit.xml"
     - name: UploadInspec output
       uses: actions/upload-artifact@v4
       with:
