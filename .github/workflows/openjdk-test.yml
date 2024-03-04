@@ -25,7 +25,6 @@ jobs:
         severity-cutoff: critical
     - name: Upload Vulnerability Scan
       uses: github/codeql-action/upload-sarif@v3
-      continue-on-error: true
       with:
         sarif_file: ${{ steps.openjdk-scan.outputs.sarif }}
     - name: DoD Scap Scan
@@ -43,7 +42,6 @@ jobs:
         path: "openjdk-scap-output"
     - name: RunInspec Scan
       run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
-      continue-on-error: true
     - name: ExtractInspec Results
       uses: shrink/actions-docker-extract@v3
       id: openjdk-extract-inspec
@@ -89,7 +87,6 @@ jobs:
         fail-build: false
     - name: Upload Vulnerability Scan
       uses: github/codeql-action/upload-sarif@v3
-      continue-on-error: true
       with:
         sarif_file: ${{ steps.jenkins-scan.outputs.sarif }}
     - name: DoD Scap Scan
@@ -107,7 +104,6 @@ jobs:
         path: "jenkins-scap-output"
     - name: RunInspec Scan
       run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-inspec"
-      continue-on-error: true
     - name: ExtractInspec Results
       uses: shrink/actions-docker-extract@v3
       id: "jenkins-extract-inspec"
