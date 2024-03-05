@@ -134,11 +134,11 @@ jobs:
         path: jenkins-inspec-output
     - name: Tag the docker image
       run: |
-        docker tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" "${{secrets.DOCKER_USERNAME}}/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:latest"
-        docker tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" "${{secrets.DOCKER_USERNAME}}/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${GITHUB_SHA}"
+        docker tag localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}} "${{secrets.DOCKER_USERNAME}}/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-latest"
+        docker tag localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}} "${{secrets.DOCKER_USERNAME}}/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-${GITHUB_SHA}"
     - name: Push the docker tags
       run: |
-        docker push "${{secrets.DOCKER_USERNAME}}/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:latest"
-        docker push "${{secrets.DOCKER_USERNAME}}/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${GITHUB_SHA}"
+        docker push "${{secrets.DOCKER_USERNAME}}/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-latest"
+        docker push "${{secrets.DOCKER_USERNAME}}/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-${GITHUB_SHA}"
     - name: Docker logout
       run: docker logout
