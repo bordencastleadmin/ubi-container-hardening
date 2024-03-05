@@ -51,15 +51,14 @@ jobs:
         destination: "ubi8-inspec-output"
     - name: PublishInspec Test Results
       uses: EnricoMi/publish-unit-test-result-action/linux@v2
-      if: always()
       with:
         files: |
-          "ubi8-inspec-output/junit.xml
+          ubi8-inspec-output/junit.xml
     - name: UploadInspec output
       uses: actions/upload-artifact@v4
       with:
         name: "UBI8 Inspec Scan Results"
-        path: "ubi8-inspec-output"
+        path: ubi8-inspec-output
     - name: Tag the docker image
       run: |
         docker tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" "${{secrets.DOCKER_USERNAME}}/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:latest"
