@@ -60,8 +60,8 @@ jobs:
         path: openjdk-inspec-output
     - name: Tag the docker image
       run: |
-        docker tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" "${{secrets.DOCKER_USERNAME}}/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-latest"
-        docker tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" "${{secrets.DOCKER_USERNAME}}/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-${GITHUB_SHA}"
+        docker tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" "${{secrets.DOCKER_USERNAME}}/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:latest"
+        docker tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" "${{secrets.DOCKER_USERNAME}}/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${GITHUB_SHA}"
     - name: Docker login
       run: echo ${{secrets.DOCKER_PASSWORD}} | docker login -u ${{secrets.DOCKER_USERNAME}} --password-stdin
     - name: Push the docker tags
