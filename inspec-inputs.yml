@@ -31,19 +31,19 @@ container_host: true
 # grub_user_boot_files: ""
  
 # Set to 'true' if IPv4 is enabled on the system. (default true)
-ipv4_enabled: true
+#ipv4_enabled: true
  
 # Set to 'true' if IPv6 is enabled on the system.(default true)
-ipv6_enabled: false
+#ipv6_enabled: false
  
 # Device or system does not have a camera installed. (default true)
-camera_installed: false
+#camera_installed: false
  
 # Device or operating system has a Bluetooth adapter installed. (default true)
-bluetooth_installed: false
+#bluetooth_installed: false
  
 # Smart card status (enabled or disabled) default: 'enabled'
-smart_card_status: disabled
+#smart_card_status: disabled
  
 # Name of tool
 #file_integrity_tool: 'aide'
