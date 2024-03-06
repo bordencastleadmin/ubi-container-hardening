@@ -8,7 +8,5 @@ WORKDIR /tmp
 RUN dnf install openscap-scanner unzip -y
 #This can be done in fewer steps with ADD, but testing on my phone ATM.
 RUN curl -LO https://github.com/ComplianceAsCode/content/releases/download/v0.1.72/scap-security-guide-0.1.72.zip
-RUN chmod a+x /tmp/scap-security-guide-0.1.72.zip
 RUN unzip /tmp/scap-security-guide-0.1.72.zip
-RUN mv /tmp/scap-security-guide-0.1.72/* /usr/share/xml/scap/ssg/content/ && chown $(whoami) /usr/share/xml/scap/ssg/content/
-RUN oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_stig --results /tmp/oscap-report.xml --oval-results /usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml
+RUN oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_stig --results /tmp/oscap-report.xml --oval-results /tmp/scap-security-guide-0.1.72/
