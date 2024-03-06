@@ -6,6 +6,6 @@ USER root
 WORKDIR /tmp
 
 RUN dnf install openscap-scanner -y
-RUN dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+RUN dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm -y
 RUN dnf install scap-security-guide -y
 RUN oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_stig --results /tmp/oscap-report.xml --oval-results /usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml
