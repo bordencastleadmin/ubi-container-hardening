@@ -46,7 +46,7 @@ jobs:
       id: "ubi8-extract-openscap"
       with:
         image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
-        path: /tmp/oscap-report.xml
+        path: /tmp/openscap.html
         destination: "ubi8-openscap-output"
     - name: Upload Scap Results
       uses: actions/upload-artifact@v4
