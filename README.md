@@ -9,7 +9,7 @@ Our repository aims to showcase a streamlined workflow for crafting containers s
 | ------------- | ----------------------- | ------------------ | ---------------------- |
 | UBI8 | registry.access.redhat.com/ubi8/ubi:8.9  | docker.io/bordenit/ubi8-ubi-8-9:latest  | docker.io/bordenit/ubi8-ubi-8-9:${GITHUB_SHA}  |
 | UBI8 | registry.access.redhat.com/ubi8/openjdk-17 | docker.io/bordenit/ubi8-openjdk-17:latest |  docker.io/bordenit/ubi8-openjdk-17:${GITHUB_SHA}   |
-| Jenkins | docker.io/bordenit/ubi8-openjdk-17:latest | TBD  | TBD |
+| Jenkins | docker.io/bordenit/ubi8-openjdk-17:latest | docker.io/bordenit/jenkins-ubi8-openjdk-17:latest  | docker.io/bordenit/jenkins-ubi8-openjdk-17:latest |
 
 # REFERENCE FOR ENABLING FIPS MODE IN A CONTAINER
 It's worth noting that podman automatically enables FIPS mode if the underlying OS has FIPS enabled. Additionally, the fips-mode-setup command is ineffective within containers for enabling or checking FIPS mode. Refer to the following link for details:
