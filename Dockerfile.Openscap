@@ -9,4 +9,4 @@ RUN dnf install openscap-scanner unzip -y
 #This can be done in fewer steps with ADD, but testing on my phone ATM.
 RUN curl -LO https://github.com/ComplianceAsCode/content/releases/download/v0.1.72/scap-security-guide-0.1.72.zip
 RUN unzip /tmp/scap-security-guide-0.1.72.zip
-RUN oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_stig --results /tmp/oscap-report.xml --oval-results /tmp/scap-security-guide-0.1.72/ssg-rhel8-ds.xml 2>&1 || true
+RUN oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_stig --results /tmp/oscap-report.xml --report /tmp/openscap.html --oval-results /tmp/scap-security-guide-0.1.72/ssg-rhel8-ds.xml 2>&1 || true
