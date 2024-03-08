@@ -51,18 +51,18 @@ jobs:
     - name: Upload Scap Results
       uses: actions/upload-artifact@v4
       with:
-        name: "Openscap Scan Results"
+        name: "Openjdk Openscap Scan Results"
         path: "ubi8-openjdk-openscap-output"
     - name: RunInspec Scan
       run: docker build . --no-cache --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
-    - name: ExtractInspec Results
+    - name: Openjdk Extract Inspec Results
       uses: shrink/actions-docker-extract@v3
       id: openjdk-extract-inspec
       with:
         image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
         path: /tmp/junit.xml
         destination: openjdk-inspec-output
-    - name: PublishInspec Test Results
+    - name: Publish Inspec Test Results
       uses: EnricoMi/publish-unit-test-result-action/linux@v2
       with:
         files: |
@@ -123,12 +123,12 @@ jobs:
         image: "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-scap"
         path: /tmp/openscap.html
         destination: "jenkins-ubi8-openjdk-openscap-output"
-    - name: Upload Jenkins Scap Results
+    - name: Upload Jenkins OpenScap Results
       uses: actions/upload-artifact@v4
       with:
         name: "Openscap Jenkins Scan Results"
         path: "jenkins-ubi8-openjdk-openscap-output"
-    - name: RunInspec Scan
+    - name: Run Inspec Scan
       run: docker build . --no-cache --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-inspec"
     - name: ExtractInspec Results
       uses: shrink/actions-docker-extract@v3
