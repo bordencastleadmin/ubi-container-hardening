@@ -28,7 +28,7 @@ jobs:
       with:
         sarif_file: ${{ steps.openjdk-scan.outputs.sarif }}
     - name: DoD Scap Scan
-      run: docker build . --no-cache --file Dockerfile.scap --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
+      run: docker build . --no-cache --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
     - uses: shrink/actions-docker-extract@v3
       id: "openjdk-extract-scap"
       with:
@@ -40,16 +40,29 @@ jobs:
       with:
         name: "Openjdk DoD SCAP Scan Results"
         path: "openjdk-scap-output"
+    - name: Openscap Scan
+      run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
+    - uses: shrink/actions-docker-extract@v3
+      id: "ubi8-openjdk-extract-openscap"
+      with:
+        image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
+        path: /tmp/openscap.html
+        destination: "ubi8-openjdk-openscap-output"
+    - name: Upload Scap Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: "Openjdk Openscap Scan Results"
+        path: "ubi8-openjdk-openscap-output"
     - name: RunInspec Scan
       run: docker build . --no-cache --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
-    - name: ExtractInspec Results
+    - name: Openjdk Extract Inspec Results
       uses: shrink/actions-docker-extract@v3
       id: openjdk-extract-inspec
       with:
         image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
         path: /tmp/junit.xml
         destination: openjdk-inspec-output
-    - name: PublishInspec Test Results
+    - name: Publish Inspec Test Results
       uses: EnricoMi/publish-unit-test-result-action/linux@v2
       with:
         files: |
@@ -90,7 +103,7 @@ jobs:
       with:
         sarif_file: ${{ steps.jenkins-scan.outputs.sarif }}
     - name: DoD Scap Scan
-      run: docker build . --no-cache --file Dockerfile.scap --build-arg CONTAINER="localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-scap"
+      run: docker build . --no-cache --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-scap"
     - uses: shrink/actions-docker-extract@v3
       id: "jenkins-extract-scap"
       with:
@@ -102,7 +115,20 @@ jobs:
       with:
         name: "Jenkins DoD SCAP Scan Results"
         path: jenkins-scap-output
-    - name: RunInspec Scan
+    - name: Openscap Scan
+      run: docker build . --no-cache --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-scap"
+    - uses: shrink/actions-docker-extract@v3
+      id: "jenkins-ubi8-openjdk-extract-openscap"
+      with:
+        image: "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-scap"
+        path: /tmp/openscap.html
+        destination: "jenkins-ubi8-openjdk-openscap-output"
+    - name: Upload Jenkins OpenScap Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: "Openscap Jenkins Scan Results"
+        path: "jenkins-ubi8-openjdk-openscap-output"
+    - name: Run Inspec Scan
       run: docker build . --no-cache --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}" --tag "localbuild/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.JENKINS_VERSION}}-inspec"
     - name: ExtractInspec Results
       uses: shrink/actions-docker-extract@v3
