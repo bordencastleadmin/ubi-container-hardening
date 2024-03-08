@@ -47,10 +47,10 @@ jobs:
         image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
         path: /tmp/openscap.html
         destination: "ubi8-openjdk-openscap-output"
-    - name: Upload Scap Results
+    - name: Upload Jenkins Scap Results
       uses: actions/upload-artifact@v4
       with:
-        name: "Openscap Scan Results"
+        name: "Openscap Jenkins Scan Results"
         path: "ubi8-openjdk-openscap-output"
     - name: RunInspec Scan
       run: docker build . --no-cache --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
