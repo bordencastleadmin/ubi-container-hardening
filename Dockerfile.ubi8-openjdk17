@@ -7,20 +7,15 @@ ENV BUILDER=/tmp/builder
 #Install Dependencies
 USER root
 RUN microdnf install dnf -y \
-  && dnf install unzip python3.11-pip git -y \
+  && dnf install mailx unzip python3.11-pip git -y \
   && pip3 install --upgrade pip \
   && pip3 install ansible ansible-core
 
 #Apply STIG
 RUN mkdir ${BUILDER}
 WORKDIR ${BUILDER}
-COPY harden-ubi8.yml harden-ubi8.yml
-RUN python3.11 -m venv ansibletemp
-RUN source ansibletemp/bin/activate \
-    && python3 -m pip install --upgrade pip \
-    && python3 -m pip install ansible ansible-core \
-    && git clone https://github.com/RedHatOfficial/ansible-role-rhel8-stig.git \
-    && ansible-playbook -i "localhost," -c local harden-ubi8.yml --skip-tags="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-08-040110"
+COPY --chmod 0755 scripts/install-run-ansible.sh ${BUILDER}/install-run-ansible.sh
+RUN ${BUILDER}/install-run-ansible.sh
 RUN update-crypto-policies --set FIPS
 #CLEANUP
 RUN dnf remove python3.11-pip git scc* unzip -y \
