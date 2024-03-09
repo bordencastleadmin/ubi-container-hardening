@@ -1,5 +1,5 @@
 #!/bin/bash
-dnf install mailx unzip python3.11-pip git -y 
+dnf install mailx postfix unzip python3.11-pip git -y 
 pip3 install --upgrade pip 
 pip3 install ansible ansible-core
 
