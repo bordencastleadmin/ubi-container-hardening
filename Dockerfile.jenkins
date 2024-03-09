@@ -93,6 +93,7 @@ COPY jenkins-support /usr/local/bin/jenkins-support
 COPY jenkins.sh /usr/local/bin/jenkins.sh
 COPY jenkins-plugin-cli.sh /bin/jenkins-plugin-cli
 
+USER root
 RUN mkdir ${BUILDER}
 WORKDIR ${BUILDER}
 COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh
@@ -100,6 +101,8 @@ RUN ${BUILDER}/install-dependencies.sh
 
 COPY --chmod=0755 scripts/cleanup-microdnf.sh ${BUILDER}/cleanup-microdnf.sh
 RUN ${BUILDER}/cleanup-microdnf.sh
+
+USER jenkins
 
 WORKDIR ${JENKINS_HOME}
 
