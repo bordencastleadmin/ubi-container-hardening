@@ -10,7 +10,6 @@ RUN microdnf install dnf -y
 
 RUN mkdir ${BUILDER}
 WORKDIR ${BUILDER}
-COPY --chmod 0755 
 COPY --chmod 0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh
 RUN ${BUILDER}/install-dependencies.sh
 
