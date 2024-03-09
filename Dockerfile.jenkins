@@ -1,5 +1,4 @@
-ARG CONTAINER
-FROM ${CONTAINER} AS jre-build
+FROM docker.io/bordenit/ubi8-openjdk-17:latest AS jre-build
 
 ENV LANG C.UTF-8
 
