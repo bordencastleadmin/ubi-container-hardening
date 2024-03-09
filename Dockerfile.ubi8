@@ -1,29 +1,16 @@
 ARG CONTAINER_VERSION_TAG=ubi:8.9
 
 FROM registry.access.redhat.com/ubi8/${CONTAINER_VERSION_TAG}
-#Install Dependencies to Run STIGs
+
 ENV BUILDER=/tmp/builder
 
-#Install Dependencies
-USER root
-RUN dnf clean all \
-    && dnf update -y \
-    && dnf install python3.11-pip unzip git -y
-
-#Apply STIG
 RUN mkdir ${BUILDER}
 WORKDIR ${BUILDER}
-COPY harden-ubi8.yml harden-ubi8.yml
-RUN python3.11 -m venv ansibletemp
-RUN source ansibletemp/bin/activate \
-    && python3 -m pip install --upgrade pip \
-    && python3 -m pip install ansible ansible-core \
-    && git clone https://github.com/RedHatOfficial/ansible-role-rhel8-stig.git \
-    && ansible-playbook -i "localhost," -c local harden-ubi8.yml --skip-tags="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-08-040110"
-RUN update-crypto-policies --set FIPS
-#CLEANUP
-RUN dnf remove git scc* python3.11-pip unzip -y
-RUN rm -rf ${BUILDER}
+COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh
+RUN ${BUILDER}/install-dependencies.sh
+
+COPY --chmod=0755 scripts/cleanup-dnf.sh ${BUILDER}/cleanup-dnf.sh
+RUN ${BUILDER}/cleanup-dnf.sh
 
 WORKDIR /
 
