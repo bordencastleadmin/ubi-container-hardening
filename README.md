@@ -1,3 +1,6 @@
+> **Note**
+Containers will not be distriibuted/accessible at this time. Those may be later, but this is still a work in progress.
+> 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=bordenitllc_ubi-container-hardening&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=bordenitllc_ubi-container-hardening)
 
 
