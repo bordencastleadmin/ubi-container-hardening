@@ -14,6 +14,8 @@ jobs:
     steps:
     #The formatting on this first line might be different for the CONTAINER_VERSION_TAG, but hopefully the rest is standard and can be copied and pasted as needed for follow on container builds.
     - uses: actions/checkout@v4
+    - name: Check if inspec is available by default
+      run: inspec detect
     - name: Build the Docker image
       run: docker build . --no-cache --file Dockerfile.ubi8-openjdk17 --build-arg CONTAINER_VERSION_TAG="${{env.CONTAINER_TAG}}/${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}"
     - name: Vulnerability scan image
