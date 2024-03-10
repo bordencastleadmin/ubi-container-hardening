@@ -87,11 +87,6 @@ ENV COPY_REFERENCE_FILE_LOG $JENKINS_HOME/copy_reference_file.log
 ENV JAVA_HOME=/opt/java/openjdk
 ENV PATH "${JAVA_HOME}/bin:${PATH}"
 
-RUN mkdir ${BUILDER}
-WORKDIR ${BUILDER}
-COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh
-RUN ${BUILDER}/install-dependencies.sh
-
 USER jenkins
 
 COPY jenkins-support /usr/local/bin/jenkins-support
