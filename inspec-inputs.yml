@@ -34,7 +34,7 @@ x11_enabled: false
 disallowed_accounts: ["games", "gopher", "ftp"]
 
 # Accounts of known managed users (Array)
-user_accounts: ["ec2-user"]
+user_accounts: ["ec2-user", "jenkins", "jboss"]
 
 # System accounts that support approved system activities. (Array)
 known_system_accounts:
@@ -52,6 +52,14 @@ known_system_accounts:
     "nobody",
     "systemd-bus-proxy",
     "ec2-user",
+    "games",
+    "ftp",
+    "tss",
+    "dbus",
+    "systemd-coredump",
+    "systemd-resolve",
+    "unbound",
+    "postfix",
   ]
 
 # V-71859/V-77819
