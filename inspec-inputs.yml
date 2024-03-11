@@ -59,7 +59,7 @@ known_system_accounts:
     "systemd-coredump",
     "systemd-resolve",
     "unbound",
-    "postfix",
+    "postfix"
   ]
 
 # V-71859/V-77819
