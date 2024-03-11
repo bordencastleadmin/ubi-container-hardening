@@ -21,6 +21,6 @@ ENV SKIP_INSTALL true
 ENV OS_CHECK_DOMAIN_NAME dev-supportedos.pi-hole.net
 
 RUN groupadd -g ${USER_ID} ${PIHOLE_GROUP}
-RUN useradd -rm -s /usr/sbin/nologin -g ${PIHOLE_GROUP} -u ${USER_ID} ${PIHOLE_USER}
+RUN useradd -rm -s /sbin/nologin -g ${PIHOLE_GROUP} -u ${USER_ID} ${PIHOLE_USER}
 RUN chown -R ${PIHOLE_USER}:${PIHOLE_GROUP} ${SCRIPTDIR}
 USER ${PIHOLE_USER}
