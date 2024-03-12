@@ -11,4 +11,4 @@ docker container run --detach -i --name ${containerName} ${containerName}
 
 containerId=$(docker container ls --all | grep -w ${containerName} | awk '{print $1}')
 
-inspec exec ${profile} -t docker://${containerId}  --input-file inspec-inputs.yml --tags container container-conditional --reporter junit2:/tmp/junit.xml html:www/index.html
+inspec exec ${profile} -t docker://${containerId} --input-file inspec-inputs.yml --tags container container-conditional --reporter junit2:/tmp/junit.xml html:www/index.html
