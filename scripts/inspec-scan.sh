@@ -8,4 +8,4 @@ docker container run --detach -i --name ${containerName} ${containerName}
 
 containerId=$(docker container ls --all | grep -w ${containerName} | awk '{print $1}')
 
-inspec exec $1 -t docker://${containerId}
+inspec exec ${containerName} -t docker://${containerId}
