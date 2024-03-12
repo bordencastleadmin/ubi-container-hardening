@@ -2,6 +2,8 @@
 containerName=$1
 profile=$2
 
+curl --tlsv1.3 -sSf --proto "=https" -L https://omnitruck.cinc.sh/install.sh | bash -s -- -v 18
+
 docker stop $(docker ps -a -q)
 docker remove $(docker ps -a -q)
 
