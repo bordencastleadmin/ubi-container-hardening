@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 tag=$1
 name=$2
 curl --tlsv1.3 -sSf --proto "=https" -L https://omnitruck.cinc.sh/install.sh | sudo bash -s -- -v 18
