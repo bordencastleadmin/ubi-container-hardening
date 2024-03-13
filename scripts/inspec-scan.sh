@@ -6,7 +6,7 @@ curl --tlsv1.3 -sSf --proto "=https" -L https://omnitruck.cinc.sh/install.sh | s
 docker stop $(docker ps -a -q)
 docker remove $(docker ps -a -q)
 
-docker container run --detach -i --name ${containerName} scan4fun
+docker run --detach -i --name scan4fun ${containerName}
 
 containerId=$(docker container ls --all | grep -w ${containerName} | awk '{print $1}')
 
