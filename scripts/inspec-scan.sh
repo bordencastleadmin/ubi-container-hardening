@@ -1,7 +1,7 @@
 #!/bin/bash
 container=$1
 
-curl --tlsv1.3 -sSf --proto "=https" -L https://omnitruck.cinc.sh/install.sh | bash -s -- -v 18
+curl --tlsv1.3 -sSf --proto "=https" -L https://omnitruck.cinc.sh/install.sh | sudo bash -s -- -v 18
 
 docker stop $(docker ps -a -q)
 docker remove $(docker ps -a -q)
