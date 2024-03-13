@@ -6,8 +6,8 @@ curl --tlsv1.3 -sSf --proto "=https" -L https://omnitruck.cinc.sh/install.sh | s
 docker stop $(docker ps -a -q)
 docker remove $(docker ps -a -q)
 
-docker run --detach -i --name scan4fun ${containerName}
+docker run -itd --name scan4fun ${container}
 
-containerId=$(docker container ls --all | grep -w ${containerName} | awk '{print $1}')
+containerId=$(docker container ls --all | grep -w ${container} | awk '{print $1}')
 
 inspec exec https://github.com/mitre/redhat-enterprise-linux-8-stig-baseline/archive/refs/tags/v1.12.0.tar.gz -t docker://${containerId} --input-file inspec-inputs.yml --tags container container-conditional --reporter junit2:/tmp/junit.xml html:www/index.html
