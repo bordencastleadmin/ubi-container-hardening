@@ -55,7 +55,7 @@ jobs:
         name: "Openscap Scan Results"
         path: "ubi8-openscap-output"
     - name: Run Inspec Scan
-      run: chmod a+x ./scripts/inspec-scan.sh && ./scripts/inspec-scan.sh localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}
+      run: chmod a+x ./scripts/inspec-scan.sh && ./scripts/inspec-scan.sh localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}} scan4fun
     - name: RunInspec Scan
       run: docker build . --no-cache --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
     - name: Extract Inspec Results
