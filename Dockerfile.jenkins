@@ -25,8 +25,6 @@ ARG JENKINS_HOME=/var/jenkins_home
 ARG REF=/usr/share/jenkins/ref
 
 ENV JENKINS_HOME $JENKINS_HOME
-ENV HOME = $JENKINS_HOME
-ENV USER = jenkins
 ENV BUILDER=/tmp/builder
 ENV JENKINS_SLAVE_AGENT_PORT ${agent_port}
 ENV REF $REF
@@ -88,6 +86,9 @@ ENV COPY_REFERENCE_FILE_LOG $JENKINS_HOME/copy_reference_file.log
 
 ENV JAVA_HOME=/opt/java/openjdk
 ENV PATH "${JAVA_HOME}/bin:${PATH}"
+
+ENV HOME = $JENKINS_HOME
+ENV USER = jenkins
 
 USER ${user}
 
