@@ -87,8 +87,8 @@ ENV COPY_REFERENCE_FILE_LOG $JENKINS_HOME/copy_reference_file.log
 ENV JAVA_HOME=/opt/java/openjdk
 ENV PATH "${JAVA_HOME}/bin:${PATH}"
 
-ENV HOME = $JENKINS_HOME
-ENV USER = jenkins
+ENV HOME=$JENKINS_HOME
+ENV USER=jenkins
 
 USER ${user}
 
