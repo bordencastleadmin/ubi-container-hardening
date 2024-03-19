@@ -20,4 +20,6 @@ RUN ln -s /usr/bin/microdnf /usr/bin/dnf
 
 WORKDIR /home/jboss
 
+RUN sed --in-place --expression="s?securerandom.source=file:/dev/random?securerandom.source=file:/dev/urandom?g" "${JAVA_HOME}/conf/security/java.security"
+
 USER jboss
