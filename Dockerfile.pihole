@@ -4,7 +4,7 @@ ENV PIHOLE_USER=pihole
 ENV PIHOLE_GROUP=pihole
 ENV USER_ID=2399
 
-RUN yum install -y git initscripts
+RUN yum install -y git initscripts sudo
 
 ENV GITDIR /etc/.pihole
 ENV SCRIPTDIR /opt/pihole
@@ -22,5 +22,6 @@ ENV OS_CHECK_DOMAIN_NAME dev-supportedos.pi-hole.net
 
 RUN groupadd -g ${USER_ID} ${PIHOLE_GROUP}
 RUN useradd -rm -s /sbin/nologin -g ${PIHOLE_GROUP} -u ${USER_ID} ${PIHOLE_USER}
+RUN usermod -aG wheel ${PIHOLE_USER}
 RUN chown -R ${PIHOLE_USER}:${PIHOLE_GROUP} ${SCRIPTDIR}
 USER ${PIHOLE_USER}
