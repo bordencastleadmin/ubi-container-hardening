@@ -161,8 +161,8 @@ jobs:
         path: pihole-inspec-output
     - name: Tag the docker image
       run: |
-        docker tag localbuild/${{env.PIHOLE_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.PIHOLE_VERSION}} "${{secrets.DOCKER_USERNAME}}/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.PIHOLE_VERSION}}-latest"
-        docker tag localbuild/${{env.PIHOLE_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.PIHOLE_VERSION}} "${{secrets.DOCKER_USERNAME}}/${{env.JENKINS_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.PIHOLE_VERSION}}-${GITHUB_SHA}"
+        docker tag localbuild/${{env.PIHOLE_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.PIHOLE_VERSION}} "${{secrets.DOCKER_USERNAME}}/${{env.PIHOLE_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.PIHOLE_VERSION}}-latest"
+        docker tag localbuild/${{env.PIHOLE_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.PIHOLE_VERSION}} "${{secrets.DOCKER_USERNAME}}/${{env.PIHOLE_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.PIHOLE_VERSION}}-${GITHUB_SHA}"
     - name: Push the docker tags
       run: |
         docker push "${{secrets.DOCKER_USERNAME}}/${{env.PIHOLE_TAG}}-${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}:${{env.PIHOLE_VERSION}}-latest"
