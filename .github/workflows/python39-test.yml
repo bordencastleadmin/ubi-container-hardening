@@ -8,7 +8,7 @@ env:
   CONTAINER_MINOR_VERSION: "39"
 jobs:
 
-  build-test-push-python3917-image:
+  build-test-python39-image:
     runs-on: ubuntu-latest
     steps:
     #The formatting on this first line might be different for the CONTAINER_VERSION_TAG, but hopefully the rest is standard and can be copied and pasted as needed for follow on container builds.
