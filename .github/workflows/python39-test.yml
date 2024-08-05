@@ -1,7 +1,7 @@
 name: Build, Test, and Push UBI8 Python Containers
 on:
-  push:
-    branches: [ "main" ]
+  pull_request:
+    types: [opened, synchronize, reopened]
 env:
   CONTAINER_TAG: "ubi8"
   CONTAINER_MAJOR_VERSION: "python"
