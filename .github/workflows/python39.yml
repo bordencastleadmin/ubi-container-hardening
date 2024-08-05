@@ -1,4 +1,4 @@
-name: Build, Test, and Push UBI8 Python Containers
+name: Build, Test, and Push UBI8 Python39 Container
 on:
   push:
     branches: [ "main" ]

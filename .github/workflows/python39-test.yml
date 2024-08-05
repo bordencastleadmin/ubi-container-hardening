@@ -1,4 +1,4 @@
-name: Build, Test, and Push UBI8 Python Containers
+name: Build and test UBI8 Python39 Container
 on:
   pull_request:
     types: [opened, synchronize, reopened]
