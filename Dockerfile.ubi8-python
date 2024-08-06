@@ -6,8 +6,6 @@ ENV BUILDER=/tmp/builder
 
 #Install Dependencies
 USER root
-RUN microdnf install dnf -y
-
 RUN mkdir ${BUILDER}
 WORKDIR ${BUILDER}
 COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh
