@@ -1,4 +1,4 @@
-ARG CONTAINER_VERSION_TAG=ubi:8.9
+ARG CONTAINER_VERSION_TAG=ubi:8.10
 
 FROM registry.access.redhat.com/ubi8/${CONTAINER_VERSION_TAG}
 
