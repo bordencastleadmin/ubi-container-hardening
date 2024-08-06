@@ -1,4 +1,4 @@
-name: Build and Test UBI 8.9 Image
+name: Build and Test UBI 8 Image
 on:
   pull_request:
     types: [opened, synchronize, reopened]

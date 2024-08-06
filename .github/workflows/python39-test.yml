@@ -1,0 +1,73 @@
+name: Build and test UBI8 Python39 Container
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+env:
+  CONTAINER_TAG: "ubi8"
+  CONTAINER_MAJOR_VERSION: "python"
+  CONTAINER_MINOR_VERSION: "39"
+jobs:
+
+  build-test-python39-image:
+    runs-on: ubuntu-latest
+    steps:
+    #The formatting on this first line might be different for the CONTAINER_VERSION_TAG, but hopefully the rest is standard and can be copied and pasted as needed for follow on container builds.
+    - uses: actions/checkout@v4
+    - name: Build the Docker image
+      run: docker build . --no-cache --file Dockerfile.ubi8-python --build-arg CONTAINER_VERSION_TAG="${{env.CONTAINER_TAG}}/${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}"
+    - name: Vulnerability scan image
+      id: python39-scan
+      uses: anchore/scan-action@v3
+      with:
+        image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}"
+        only-fixed: true  
+        severity-cutoff: critical
+    - name: Upload Vulnerability Scan
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ steps.python39-scan.outputs.sarif }}
+    - name: python39 DoD Scap Scan
+      run: docker build . --no-cache --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
+    - uses: shrink/actions-docker-extract@v3
+      id: "python39-extract-scap"
+      with:
+        image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
+        path: /root/SCC/Sessions
+        destination: "python39-scap-output"
+    - name: Upload python39 Scap Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: "python39 DoD SCAP Scan Results"
+        path: "python39-scap-output"
+    - name: python39 Openscap Scan
+      run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
+    - uses: shrink/actions-docker-extract@v3
+      id: "ubi8-python39-extract-openscap"
+      with:
+        image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-scap"
+        path: /tmp/openscap.html
+        destination: "ubi8-python39-openscap-output"
+    - name: Upload python39 Scap Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: "Openscap python39 Scan Results"
+        path: "ubi8-python39-openscap-output"
+    - name: RunInspec Scan
+      run: docker build . --no-cache --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}" --tag "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
+    - name: ExtractInspec Results
+      uses: shrink/actions-docker-extract@v3
+      id: python39-extract-inspec
+      with:
+        image: "localbuild/${{env.CONTAINER_TAG}}-${{env.CONTAINER_MAJOR_VERSION}}-${{env.CONTAINER_MINOR_VERSION}}-inspec"
+        path: /tmp/junit.xml
+        destination: python39-inspec-output
+    - name: PublishInspec Test Results
+      uses: EnricoMi/publish-unit-test-result-action/linux@v2
+      with:
+        files: |
+          python39-inspec-output/junit.xml
+    - name: UploadInspec output
+      uses: actions/upload-artifact@v4
+      with:
+        name: python39 Inspec Scan Results
+        path: python39-inspec-output

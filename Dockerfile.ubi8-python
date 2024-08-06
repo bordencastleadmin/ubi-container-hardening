@@ -1,9 +1,11 @@
-ARG CONTAINER_VERSION_TAG=ubi:8.10
+ARG CONTAINER_VERSION_TAG="ubi8/python-39"
 
-FROM registry.access.redhat.com/ubi8/${CONTAINER_VERSION_TAG}
-
+FROM registry.access.redhat.com/${CONTAINER_VERSION_TAG}
+#Install Dependencies to Run STIGs
 ENV BUILDER=/tmp/builder
 
+#Install Dependencies
+USER root
 RUN mkdir ${BUILDER}
 WORKDIR ${BUILDER}
 COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh
@@ -12,6 +14,4 @@ RUN ${BUILDER}/install-dependencies.sh
 COPY --chmod=0755 scripts/cleanup-dnf.sh ${BUILDER}/cleanup-dnf.sh
 RUN ${BUILDER}/cleanup-dnf.sh
 
-WORKDIR /
-
-USER root
+USER 1001
