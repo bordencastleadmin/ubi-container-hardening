@@ -1,4 +1,4 @@
-name: Build, Test, and Push UBI 8.9 Image
+name: Build, Test, and Push UBI 8 Image
 on:
   push:
     branches: [ "main" ]
