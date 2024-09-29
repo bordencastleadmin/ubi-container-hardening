@@ -17,11 +17,11 @@ jobs:
       matrix:
         container:
           # Correct UBI 8.10 image
-          - {name: "ubi", repo_name: "registry.access.redhat.com/ubi8/ubi", version: "8.10", dockerfile: "Dockerfile.ubi8"}
+          - {name: "ubi", repo_name: "ubi8/ubi", version: "8.10", dockerfile: "Dockerfile.ubi8"}
           # Python image with no version suffix
-          - {name: "ubi-python", repo_name: "registry.access.redhat.com/ubi8/python-39", version: "", dockerfile: "Dockerfile.ubi8-python"}
+          - {name: "ubi-python", repo_name: "ubi8/python-39", version: "", dockerfile: "Dockerfile.ubi8-python"}
           # OpenJDK image with no version suffix
-          - {name: "ubi-openjdk", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", version: "", dockerfile: "Dockerfile.ubi8-openjdk17"}
+          - {name: "ubi-openjdk", repo_name: "ubi8/openjdk-17", version: "", dockerfile: "Dockerfile.ubi8-openjdk17"}
     
     steps:
       - uses: actions/checkout@v4
