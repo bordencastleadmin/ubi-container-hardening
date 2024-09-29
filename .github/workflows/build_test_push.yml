@@ -1,3 +1,4 @@
+
 name: Build, Test, and Push Containers
 
 on:
@@ -16,22 +17,19 @@ jobs:
     strategy:
       matrix:
         container:
-          # UBI image with version 8.10
-          - {name: "ubi", repo_name: "ubi8/ubi", version: "8.10", dockerfile: "Dockerfile.ubi8"}
+          # UBI image with correct version 8.10
+          - {name: "ubi", repo_name: "registry.access.redhat.com/ubi8/ubi", version: "8.10", dockerfile: "Dockerfile.ubi8"}
           # Python image with no version suffix
-          - {name: "ubi-python", repo_name: "ubi8/python-39", version: "", dockerfile: "Dockerfile.ubi8-python"}
+          - {name: "ubi-python", repo_name: "registry.access.redhat.com/ubi8/python-39", version: "", dockerfile: "Dockerfile.ubi8-python"}
           # OpenJDK image with no version suffix
-          - {name: "ubi-openjdk", repo_name: "ubi8/openjdk-17", version: "", dockerfile: "Dockerfile.ubi8-openjdk17"}
+          - {name: "ubi-openjdk", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", version: "", dockerfile: "Dockerfile.ubi8-openjdk17"}
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Build the Docker image
         run: |
-          docker build . \
-            --file ${{ matrix.container.dockerfile }} \
-            --build-arg CONTAINER_VERSION_TAG="${{ matrix.container.repo_name }}${{ matrix.container.version }}" \
-            --tag "localbuild/${{ matrix.container.name }}:${{ matrix.container.version }}"          
+          docker build .             --file ${{ matrix.container.dockerfile }}             --build-arg CONTAINER_VERSION_TAG="${{ matrix.container.repo_name }}${{ matrix.container.version }}"             --tag "localbuild/${{ matrix.container.name }}:${{ matrix.container.version if matrix.container.version != '' else 'latest' }}"
 
       # Vulnerability scan for containers with a version
       - name: Vulnerability scan image with version
