@@ -1,0 +1,67 @@
+name: Build, Test, and Push Containers
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        container:
+          - {name: "ubi", major: "8", minor: "9", dockerfile: "Dockerfile.ubi8"}
+          - {name: "ubi-python", major: "8", minor: "9", dockerfile: "Dockerfile.ubi8-python"}
+          - {name: "ubi-openjdk", major: "8", minor: "9", dockerfile: "Dockerfile.ubi8-openjdk17"}
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the Docker image
+        run: |
+          docker build . --file ${{ matrix.container.dockerfile }} --build-arg CONTAINER_VERSION_TAG="${{ matrix.container.name }}:${{ matrix.container.major }}.${{ matrix.container.minor }}" --tag "localbuild/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}"
+
+      - name: Vulnerability scan image
+        id: vulnerability-scan
+        uses: anchore/scan-action@v3
+        with:
+          image: "localbuild/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}"
+          only-fixed: true
+          severity-cutoff: critical
+
+      - name: Upload Vulnerability Scan
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
+
+      - name: Run DoD SCAP Scan
+        if: matrix.container.name == 'ubi'
+        run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}" --tag "localbuild/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}-dodscap"
+
+      - name: Run OpenSCAP Scan
+        if: matrix.container.name == 'ubi'
+        run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}" --tag "localbuild/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}-openscap"
+
+      - name: Run Inspec Scan
+        if: matrix.container.name == 'ubi'
+        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}" --tag "localbuild/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}-inspec"
+
+      # Conditional push only if the event is a push (merge) and not a pull request
+      - name: Tag and Push Docker image
+        if: github.event_name == 'push'
+        run: |
+          docker tag "localbuild/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}:latest"
+          docker tag "localbuild/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}:${{ github.sha }}"
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}:latest"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}-${{ matrix.container.major }}-${{ matrix.container.minor }}:${{ github.sha }}"
+
+      - name: Docker logout
+        if: github.event_name == 'push'
+        run: docker logout
