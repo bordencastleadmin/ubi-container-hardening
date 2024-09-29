@@ -16,8 +16,7 @@ jobs:
     strategy:
       matrix:
         container:
-          # Allow passing dynamic Red Hat repository names for more flexibility
-          - {name: "ubi", repo_name: "registry.access.redhat.com/ubi8", version: "8.9", dockerfile: "Dockerfile.ubi8"}
+          - {name: "ubi", repo_name: "registry.access.redhat.com/ubi8", version: "8.10", dockerfile: "Dockerfile.ubi8"}
           - {name: "ubi-python", repo_name: "registry.access.redhat.com/ubi8/python-39", version: "8.9", dockerfile: "Dockerfile.ubi8-python"}
           - {name: "ubi-openjdk", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", version: "8.9", dockerfile: "Dockerfile.ubi8-openjdk17"}
     
@@ -29,13 +28,13 @@ jobs:
           docker build . \
             --file ${{ matrix.container.dockerfile }} \
             --build-arg CONTAINER_VERSION_TAG="${{ matrix.container.repo_name }}:${{ matrix.container.version }}" \
-            --tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}"
+            --tag "localbuild/${{ matrix.container.name }}-${{ matrix.container.version }}"
 
       - name: Vulnerability scan image
         id: vulnerability-scan
         uses: anchore/scan-action@v3
         with:
-          image: "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}"
+          image: "localbuild/${{ matrix.container.name }}-${{ matrix.container.version }}"
           only-fixed: true
           severity-cutoff: critical
 
@@ -44,27 +43,28 @@ jobs:
         with:
           sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
 
+      # Separate SCAP and Inspec scans for UBI images
       - name: Run DoD SCAP Scan
         if: matrix.container.name == 'ubi'
-        run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}" --tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}-dodscap"
+        run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}" --tag "localbuild/${{ matrix.container.name }}-${{ matrix.container.version }}-dodscap"
 
       - name: Run OpenSCAP Scan
         if: matrix.container.name == 'ubi'
-        run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}" --tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}-openscap"
+        run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}" --tag "localbuild/${{ matrix.container.name }}-${{ matrix.container.version }}-openscap"
 
       - name: Run Inspec Scan
         if: matrix.container.name == 'ubi'
-        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}" --tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}-inspec"
+        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}" --tag "localbuild/${{ matrix.container.name }}-${{ matrix.container.version }}-inspec"
 
-      # Conditional push only if the event is a push (merge) and not a pull request
+      # Conditional push only on merges (push events)
       - name: Tag and Push Docker image
         if: github.event_name == 'push'
         run: |
-          docker tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}-${{ matrix.container.version }}:latest"
-          docker tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}-${{ matrix.container.version }}:${{ github.sha }}"
+          docker tag "localbuild/${{ matrix.container.name }}-${{ matrix.container.version }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}-${{ matrix.container.version }}:latest"
+          docker tag "localbuild/${{ matrix.container.name }}-${{ matrix.container.version }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}-${{ matrix.container.version }}:${{ github.sha }}"
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}-${{ matrix.container.version }}:latest"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}-${{ matrix.container.version }}:${{ github.sha }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}-${{ matrix.container.version }}:latest"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}-${{ matrix.container.version }}:${{ github.sha }}"
 
       - name: Docker logout
         if: github.event_name == 'push'
