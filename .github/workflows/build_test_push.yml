@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         container:
-          # Correct UBI 8.10 image
+          # UBI image with version 8.10
           - {name: "ubi", repo_name: "ubi8/ubi", version: "8.10", dockerfile: "Dockerfile.ubi8"}
           # Python image with no version suffix
           - {name: "ubi-python", repo_name: "ubi8/python-39", version: "", dockerfile: "Dockerfile.ubi8-python"}
@@ -30,14 +30,14 @@ jobs:
         run: |
           docker build . \
             --file ${{ matrix.container.dockerfile }} \
-            --build-arg CONTAINER_VERSION_TAG="${{ matrix.container.repo_name }}:${{ matrix.container.version }}" \
-            --tag "localbuild/${{ matrix.container.name }}:${{ matrix.container.version }}"
+            --build-arg CONTAINER_VERSION_TAG="${{ matrix.container.repo_name }}${{ matrix.container.version }}" \
+            --tag "localbuild/${{ matrix.container.name }}${{ matrix.container.version:+:${{ matrix.container.version }}}}"
 
       - name: Vulnerability scan image
         id: vulnerability-scan
         uses: anchore/scan-action@v3
         with:
-          image: "localbuild/${{ matrix.container.name }}:${{ matrix.container.version }}"
+          image: "localbuild/${{ matrix.container.name }}${{ matrix.container.version:+:${{ matrix.container.version }}}}"
           only-fixed: true
           severity-cutoff: critical
 
@@ -63,11 +63,11 @@ jobs:
       - name: Tag and Push Docker image
         if: github.event_name == 'push'
         run: |
-          docker tag "localbuild/${{ matrix.container.name }}:${{ matrix.container.version }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ matrix.container.version }}:latest"
-          docker tag "localbuild/${{ matrix.container.name }}:${{ matrix.container.version }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ matrix.container.version }}:${{ github.sha }}"
+          docker tag "localbuild/${{ matrix.container.name }}${{ matrix.container.version:+:${{ matrix.container.version }}}}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}${{ matrix.container.version:+:${{ matrix.container.version }}}}:latest"
+          docker tag "localbuild/${{ matrix.container.name }}${{ matrix.container.version:+:${{ matrix.container.version }}}}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}${{ matrix.container.version:+:${{ matrix.container.version }}}}:${{ github.sha }}"
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ matrix.container.version }}:latest"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ matrix.container.version }}:${{ github.sha }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}${{ matrix.container.version:+:${{ matrix.container.version }}}}:latest"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}${{ matrix.container.version:+:${{ matrix.container.version }}}}:${{ github.sha }}"
 
       - name: Docker logout
         if: github.event_name == 'push'
