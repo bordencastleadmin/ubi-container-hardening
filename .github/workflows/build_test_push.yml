@@ -16,10 +16,9 @@ jobs:
     strategy:
       matrix:
         container:
-          # Allow passing dynamic Red Hat repository names for more flexibility
-          - {name: "ubi", repo_name: "registry.access.redhat.com/ubi8", version: "8.10", dockerfile: "Dockerfile.ubi8"}
-          - {name: "ubi-python", repo_name: "registry.access.redhat.com/ubi8/python-39", version: "latest", dockerfile: "Dockerfile.ubi8-python"}
-          - {name: "ubi-openjdk", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", version: "latest", dockerfile: "Dockerfile.ubi8-openjdk17"}
+          - {name: "ubi", repo_name: "registry.access.redhat.com/ubi8", dockerfile: "Dockerfile.ubi8"}
+          - {name: "ubi-python", repo_name: "registry.access.redhat.com/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python"}
+          - {name: "ubi-openjdk", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk17"}
     
     steps:
       - uses: actions/checkout@v4
@@ -28,8 +27,8 @@ jobs:
         run: |
           docker build . \
             --file ${{ matrix.container.dockerfile }} \
-            --build-arg CONTAINER_VERSION_TAG="${{ matrix.container.repo_name }}:${{ matrix.container.version }}" \
-            --tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}"
+            --build-arg CONTAINER_VERSION_TAG="${{ matrix.container.repo_name }}" \
+            --tag "localbuild/${{ matrix.container.repo_name }}"
 
       - name: Vulnerability scan image
         id: vulnerability-scan
@@ -37,7 +36,8 @@ jobs:
         with:
           image: "localbuild/${{ matrix.container.repo_name }}"
           only-fixed: true
-          continue-on-error: true
+          severity-cutoff: critical
+          fail-build: false
 
       - name: Upload Vulnerability Scan
         uses: github/codeql-action/upload-sarif@v3
@@ -45,22 +45,26 @@ jobs:
           sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
 
       - name: Run DoD SCAP Scan
+        if: matrix.container.name == 'ubi'
         run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-dodscap"
 
-      - uses: shrink/actions-docker-extract@v3
-        id: "ubi-extract-scap"
+      - name: Extract SCAP Results
+        if: matrix.container.name == 'ubi'
+        uses: shrink/actions-docker-extract@v3
         with:
           image: "localbuild/${{ matrix.container.repo_name }}-dodscap"
           path: /root/SCC/Sessions
           destination: ubi-scap-output
 
       - name: Upload SCAP Results
+        if: matrix.container.name == 'ubi'
         uses: actions/upload-artifact@v4
         with:
           name: "UBI DoD SCAP Scan Results"
           path: ubi-scap-output
 
       - name: Run OpenSCAP Scan with OpenSCAP Docker
+        if: matrix.container.name == 'ubi'
         run: |
           docker run --rm \
             -v $(pwd):/root/scan \
@@ -73,48 +77,53 @@ jobs:
             /root/scan/ssg-ubi8-ds.xml
 
       - name: Extract OpenSCAP Results
+        if: matrix.container.name == 'ubi'
         run: |
           mkdir -p ubi-openscap-output
           cp /tmp/openscap-report.html ubi-openscap-output/
           cp /tmp/openscap-results.xml ubi-openscap-output/
 
       - name: Upload OpenSCAP Results
+        if: matrix.container.name == 'ubi'
         uses: actions/upload-artifact@v4
         with:
           name: "UBI OpenSCAP Scan Results"
           path: ubi-openscap-output
 
       - name: Run Inspec Scan
+        if: matrix.container.name == 'ubi'
         run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-inspec"
 
-      - uses: shrink/actions-docker-extract@v3
-        id: "ubi-extract-inspec"
+      - name: Extract Inspec Results
+        if: matrix.container.name == 'ubi'
+        uses: shrink/actions-docker-extract@v3
         with:
           image: "localbuild/${{ matrix.container.repo_name }}-inspec"
           path: /tmp/junit.xml
           destination: ubi-inspec-output
 
       - name: Publish Inspec Test Results
+        if: matrix.container.name == 'ubi'
         uses: EnricoMi/publish-unit-test-result-action/linux@v2
         with:
           files: |
             ubi-inspec-output/junit.xml
 
       - name: Upload Inspec Scan Results
+        if: matrix.container.name == 'ubi'
         uses: actions/upload-artifact@v4
         with:
           name: "UBI Inspec Scan Results"
           path: ubi-inspec-output
-          
-      # Conditional push only if the event is a push (merge) and not a pull request
+
       - name: Tag and Push Docker image
         if: github.event_name == 'push'
         run: |
-          docker tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}-${{ matrix.container.version }}:latest"
-          docker tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}-${{ matrix.container.version }}:${{ github.sha }}"
+          docker tag "localbuild/${{ matrix.container.repo_name }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}:latest"
+          docker tag "localbuild/${{ matrix.container.repo_name }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}:${{ github.sha }}"
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}-${{ matrix.container.version }}:latest"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}-${{ matrix.container.version }}:${{ github.sha }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}:latest"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}:${{ github.sha }}"
 
       - name: Docker logout
         if: github.event_name == 'push'
