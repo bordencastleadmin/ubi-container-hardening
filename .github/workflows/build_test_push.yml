@@ -45,11 +45,9 @@ jobs:
           sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
 
       - name: Run DoD SCAP Scan
-        if: matrix.container.name == 'ubi'
         run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-dodscap"
 
       - name: Extract SCAP Results
-        if: matrix.container.name == 'ubi'
         uses: shrink/actions-docker-extract@v3
         with:
           image: "localbuild/${{ matrix.container.repo_name }}-dodscap"
@@ -57,7 +55,6 @@ jobs:
           destination: ubi-scap-output
 
       - name: Upload SCAP Results
-        if: matrix.container.name == 'ubi'
         uses: actions/upload-artifact@v4
         with:
           name: "SCAP Scan Results - ${{ matrix.container.name }}"
@@ -84,7 +81,6 @@ jobs:
         run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-inspec"
 
       - name: Extract Inspec Results
-        if: matrix.container.name == 'ubi'
         uses: shrink/actions-docker-extract@v3
         with:
           image: "localbuild/${{ matrix.container.repo_name }}-inspec"
@@ -92,14 +88,12 @@ jobs:
           destination: ubi-inspec-output
 
       - name: Publish Inspec Test Results
-        if: matrix.container.name == 'ubi'
         uses: EnricoMi/publish-unit-test-result-action/linux@v2
         with:
           files: |
             ubi-inspec-output/junit.xml
 
       - name: Upload Inspec Scan Results
-        if: matrix.container.name == 'ubi'
         uses: actions/upload-artifact@v4
         with:
           name: "Inspec Scan Results - ${{ matrix.container.name }}"
