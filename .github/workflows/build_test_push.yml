@@ -60,7 +60,7 @@ jobs:
         if: matrix.container.name == 'ubi'
         uses: actions/upload-artifact@v4
         with:
-          name: "UBI DoD SCAP Scan Results"
+          name: "SCAP Scan Results - ${{ matrix.container.name }}"
           path: ubi-scap-output
 
       - name: OpenSCAP Scan
@@ -76,7 +76,7 @@ jobs:
       - name: Upload OpenSCAP Results
         uses: actions/upload-artifact@v4
         with:
-          name: "OpenSCAP Scan Results"
+          name: "OpenSCAP Scan Results - ${{ matrix.container.name }}"
           path: ubi-openscap-output
 
       - name: Run Inspec Scan
@@ -102,7 +102,7 @@ jobs:
         if: matrix.container.name == 'ubi'
         uses: actions/upload-artifact@v4
         with:
-          name: "UBI Inspec Scan Results"
+          name: "Inspec Scan Results - ${{ matrix.container.name }}"
           path: ubi-inspec-output
 
       - name: Tag and Push Docker image
