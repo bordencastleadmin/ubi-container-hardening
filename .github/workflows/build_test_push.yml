@@ -18,8 +18,8 @@ jobs:
         container:
           # Allow passing dynamic Red Hat repository names for more flexibility
           - {name: "ubi", repo_name: "registry.access.redhat.com/ubi8", version: "8.10", dockerfile: "Dockerfile.ubi8"}
-          - {name: "ubi-python", repo_name: "registry.access.redhat.com/ubi8/python-39", version: "8.9", dockerfile: "Dockerfile.ubi8-python"}
-          - {name: "ubi-openjdk", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", version: "8.9", dockerfile: "Dockerfile.ubi8-openjdk17"}
+          - {name: "ubi-python", repo_name: "registry.access.redhat.com/ubi8/python-39", version: "latest", dockerfile: "Dockerfile.ubi8-python"}
+          - {name: "ubi-openjdk", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", version: "latest", dockerfile: "Dockerfile.ubi8-openjdk17"}
     
     steps:
       - uses: actions/checkout@v4
