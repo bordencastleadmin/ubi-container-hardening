@@ -23,6 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install OpenSCAP Docker
+        run: sudo apt-get install -y openscap-docker
+
       - name: Build the Docker image
         run: |
           docker build . \
@@ -63,18 +66,14 @@ jobs:
           name: "UBI DoD SCAP Scan Results"
           path: ubi-scap-output
 
-      - name: Run OpenSCAP Scan with OpenSCAP Docker
+      - name: Run OpenSCAP Scan using openscap-docker
         if: matrix.container.name == 'ubi'
         run: |
-          docker run --rm \
-            -v $(pwd):/root/scan \
-            -v /tmp:/tmp \
-            quay.io/openscap/openscap-docker \
-            oscap xccdf eval \
+          sudo oscap-docker image "localbuild/${{ matrix.container.repo_name }}" xccdf eval \
             --profile xccdf_org.ssgproject.content_profile_standard \
             --results /tmp/openscap-results.xml \
             --report /tmp/openscap-report.html \
-            /root/scan/ssg-ubi8-ds.xml
+            /usr/share/xml/scap/ssg/content/ssg-ubi8-ds.xml
 
       - name: Extract OpenSCAP Results
         if: matrix.container.name == 'ubi'
