@@ -37,7 +37,6 @@ jobs:
         with:
           image: "localbuild/${{ matrix.container.repo_name }}"
           only-fixed: true
-          severity-cutoff: critical
           fail-build: false
 
       - name: Upload Vulnerability Scan
