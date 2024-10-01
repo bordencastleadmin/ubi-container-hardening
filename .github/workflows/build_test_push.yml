@@ -31,7 +31,7 @@ jobs:
             --build-arg CONTAINER_VERSION_TAG="${{ matrix.container.repo_name }}:${{ matrix.container.version }}" \
             --tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}"
 
-           - name: Vulnerability scan image
+      - name: Vulnerability scan image
         id: vulnerability-scan
         uses: anchore/scan-action@v3
         with:
