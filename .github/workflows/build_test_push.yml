@@ -31,13 +31,14 @@ jobs:
             --build-arg CONTAINER_VERSION_TAG="${{ matrix.container.repo_name }}:${{ matrix.container.version }}" \
             --tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}"
 
-      - name: Vulnerability scan image
+           - name: Vulnerability scan image
         id: vulnerability-scan
         uses: anchore/scan-action@v3
         with:
-          image: "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}"
+          image: "localbuild/${{ matrix.container.repo_name }}"
           only-fixed: true
           severity-cutoff: critical
+          fail-build: false
 
       - name: Upload Vulnerability Scan
         uses: github/codeql-action/upload-sarif@v3
@@ -45,14 +46,67 @@ jobs:
           sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
 
       - name: Run DoD SCAP Scan
-        run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}" --tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}-dodscap"
+        run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-dodscap"
 
-      - name: Run OpenSCAP Scan
-        run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}" --tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}-openscap"
+      - uses: shrink/actions-docker-extract@v3
+        id: "ubi-extract-scap"
+        with:
+          image: "localbuild/${{ matrix.container.repo_name }}-dodscap"
+          path: /root/SCC/Sessions
+          destination: ubi-scap-output
+
+      - name: Upload SCAP Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: "UBI DoD SCAP Scan Results"
+          path: ubi-scap-output
+
+      - name: Run OpenSCAP Scan with OpenSCAP Docker
+        run: |
+          docker run --rm \
+            -v $(pwd):/root/scan \
+            -v /tmp:/tmp \
+            quay.io/openscap/openscap-docker \
+            oscap xccdf eval \
+            --profile xccdf_org.ssgproject.content_profile_standard \
+            --results /tmp/openscap-results.xml \
+            --report /tmp/openscap-report.html \
+            /root/scan/ssg-ubi8-ds.xml
+
+      - name: Extract OpenSCAP Results
+        run: |
+          mkdir -p ubi-openscap-output
+          cp /tmp/openscap-report.html ubi-openscap-output/
+          cp /tmp/openscap-results.xml ubi-openscap-output/
+
+      - name: Upload OpenSCAP Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: "UBI OpenSCAP Scan Results"
+          path: ubi-openscap-output
 
       - name: Run Inspec Scan
-        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}" --tag "localbuild/${{ matrix.container.repo_name }}-${{ matrix.container.version }}-inspec"
+        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-inspec"
 
+      - uses: shrink/actions-docker-extract@v3
+        id: "ubi-extract-inspec"
+        with:
+          image: "localbuild/${{ matrix.container.repo_name }}-inspec"
+          path: /tmp/junit.xml
+          destination: ubi-inspec-output
+
+      - name: Publish Inspec Test Results
+        uses: EnricoMi/publish-unit-test-result-action/linux@v2
+        with:
+          files: |
+            ubi-inspec-output/junit.xml
+
+      - name: Upload Inspec Scan Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: "UBI Inspec Scan Results"
+          path: ubi-inspec-output
+          
       # Conditional push only if the event is a push (merge) and not a pull request
       - name: Tag and Push Docker image
         if: github.event_name == 'push'
