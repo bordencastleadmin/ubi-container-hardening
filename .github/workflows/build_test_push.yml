@@ -23,9 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install OpenSCAP Docker
-        run: sudo apt-get install -y openscap-docker
-
       - name: Build the Docker image
         run: |
           docker build . \
@@ -66,27 +63,20 @@ jobs:
           name: "UBI DoD SCAP Scan Results"
           path: ubi-scap-output
 
-      - name: Run OpenSCAP Scan using openscap-docker
-        if: matrix.container.name == 'ubi'
-        run: |
-          sudo oscap-docker image "localbuild/${{ matrix.container.repo_name }}" xccdf eval \
-            --profile xccdf_org.ssgproject.content_profile_standard \
-            --results /tmp/openscap-results.xml \
-            --report /tmp/openscap-report.html \
-            /usr/share/xml/scap/ssg/content/ssg-ubi8-ds.xml
+      - name: OpenSCAP Scan
+        run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-scap"
 
-      - name: Extract OpenSCAP Results
-        if: matrix.container.name == 'ubi'
-        run: |
-          mkdir -p ubi-openscap-output
-          cp /tmp/openscap-report.html ubi-openscap-output/
-          cp /tmp/openscap-results.xml ubi-openscap-output/
+      - uses: shrink/actions-docker-extract@v3
+        id: "ubi-extract-openscap"
+        with:
+          image: "localbuild/${{ matrix.container.repo_name }}-scap"
+          path: /tmp/openscap.html
+          destination: ubi-openscap-output
 
       - name: Upload OpenSCAP Results
-        if: matrix.container.name == 'ubi'
         uses: actions/upload-artifact@v4
         with:
-          name: "UBI OpenSCAP Scan Results"
+          name: "OpenSCAP Scan Results"
           path: ubi-openscap-output
 
       - name: Run Inspec Scan
