@@ -1,6 +1,6 @@
 ARG CONTAINER_VERSION_TAG="ubi8/python-39"
 
-FROM registry.access.redhat.com/${CONTAINER_VERSION_TAG}
+FROM ${CONTAINER_VERSION_TAG}
 #Install Dependencies to Run STIGs
 ENV BUILDER=/tmp/builder
 
