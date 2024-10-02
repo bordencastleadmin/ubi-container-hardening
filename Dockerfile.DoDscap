@@ -16,10 +16,8 @@ ADD --chmod=0755 https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/scc-${SCC
 
 ADD --chmod=0755 https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_RHEL_8_${BENCHMARK_VERSION}_STIG_SCAP_1-2_Benchmark.zip /tmp
 
-RUN unzip scc-${SCC_VERSION}_rhel8_oracle-linux8_x86_64_bundle.zip
-
-RUN dnf install --nogpgcheck /tmp/scc-${SCC_VERSION}_rhel8_x86_64/scc-${SCC_VERSION}.rhel8.x86_64.rpm -y
-
-RUN /opt/scc/cscc --disableAll
-RUN /opt/scc/cscc --setProfile MAC-3_Sensitive
-RUN /opt/scc/cscc -isr --setOpt ignoreCPEOVALResults 1 --force ./U_RHEL_8_${BENCHMARK_VERSION}_STIG_SCAP_1-2_Benchmark.zip
+RUN unzip scc-${SCC_VERSION}_rhel8_oracle-linux8_x86_64_bundle.zip && \
+    dnf install --nogpgcheck /tmp/scc-${SCC_VERSION}_rhel8_x86_64/scc-${SCC_VERSION}.rhel8.x86_64.rpm -y && \
+    /opt/scc/cscc --disableAll && \
+    /opt/scc/cscc --setProfile MAC-3_Sensitive && \
+    /opt/scc/cscc -isr --setOpt ignoreCPEOVALResults 1 --force ./U_RHEL_8_${BENCHMARK_VERSION}_STIG_SCAP_1-2_Benchmark.zip
