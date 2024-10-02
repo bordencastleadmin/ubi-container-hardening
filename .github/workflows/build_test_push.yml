@@ -77,7 +77,6 @@ jobs:
           path: ubi-openscap-output
 
       - name: Run Inspec Scan
-        if: matrix.container.name == 'ubi'
         run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-inspec"
 
       - name: Extract Inspec Results
