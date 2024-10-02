@@ -9,8 +9,8 @@ ENV HOME=/root
 USER root
 WORKDIR /tmp
 
-RUN dnf install dnf -y
-RUN dnf install unzip -y
+RUN dnf install dnf -y && \
+    dnf install unzip -y
 
 ADD --chmod=0755 https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/scc-${SCC_VERSION}_rhel8_oracle-linux8_x86_64_bundle.zip /tmp
 
