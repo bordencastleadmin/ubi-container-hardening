@@ -35,6 +35,13 @@ jobs:
             --build-arg BASE_IMAGE="${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}" \
             --tag "localbuild/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}"
 
+      # Save Docker cache for base images
+      - name: Save Docker Cache for Base Containers
+        uses: actions/cache@v3
+        with:
+          path: /var/lib/docker
+          key: docker-build-${{ matrix.base_container.repo_name }}-${{ matrix.base_container.version_tag }}
+
       # Vulnerability scan for the base images
       - name: Vulnerability scan base image
         id: base-vulnerability-scan
@@ -49,6 +56,23 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ steps.base-vulnerability-scan.outputs.sarif }}
+
+      # DoD SCAP Scan for Base Container
+      - name: Run DoD SCAP Scan for Base
+        run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}" --tag "localbuild/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}-dodscap"
+
+      - name: Extract DoD SCAP Results for Base
+        uses: shrink/actions-docker-extract@v3
+        with:
+          image: "localbuild/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}-dodscap"
+          path: /root/SCC/Sessions
+          destination: base-scap-output
+
+      - name: Upload DoD SCAP Results for Base
+        uses: actions/upload-artifact@v4
+        with:
+          name: "DoD SCAP Scan Results - ${{ matrix.base_container.name }}"
+          path: base-scap-output
 
       # OpenSCAP Scan for Base Container
       - name: Run OpenSCAP Scan for Base
@@ -143,6 +167,23 @@ jobs:
         with:
           sarif_file: ${{ steps.app-vulnerability-scan.outputs.sarif }}
 
+      # DoD SCAP Scan for App Container
+      - name: Run DoD SCAP Scan for App
+        run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.app_container.repo_name }}:${{ matrix.app_container.version_tag }}" --tag "localbuild/${{ matrix.app_container.repo_name }}:${{ matrix.app_container.version_tag }}-dodscap"
+
+      - name: Extract DoD SCAP Results for App
+        uses: shrink/actions-docker-extract@v3
+        with:
+          image: "localbuild/${{ matrix.app_container.repo_name }}:${{ matrix.app_container.version_tag }}-dodscap"
+          path: /root/SCC/Sessions
+          destination: app-scap-output
+
+      - name: Upload DoD SCAP Results for App
+        uses: actions/upload-artifact@v4
+        with:
+          name: "DoD SCAP Scan Results - Jenkins"
+          path: app-scap-output
+
       # OpenSCAP Scan for App Containers
       - name: Run OpenSCAP Scan for App
         run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="${{ matrix.app_container.repo_name }}:${{ matrix.app_container.version_tag }}" --tag "${{ matrix.app_container.repo_name }}:${{ matrix.app_container.version_tag }}-scap"
@@ -157,7 +198,7 @@ jobs:
       - name: Upload OpenSCAP Results for App
         uses: actions/upload-artifact@v4
         with:
-          name: "OpenSCAP Scan Results - ${{ matrix.app_container.name }}"
+          name: "OpenSCAP Scan Results - Jenkins"
           path: app-openscap-output
 
       # Inspec Scan for App Containers
