@@ -1,4 +1,4 @@
-ARG CONTAINER_VERSION_TAG="ubi8/openjdk-17"
+FROM ${BASE_IMAGE}
 
 FROM ${CONTAINER_VERSION_TAG}
 #Install Dependencies to Run STIGs
