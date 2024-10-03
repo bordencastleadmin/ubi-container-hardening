@@ -17,11 +17,14 @@ jobs:
       matrix:
         container:
           - base: {name: "ubi", repo_name: "registry.access.redhat.com/ubi8", dockerfile: "Dockerfile.ubi8", version_tag: "8.10"}
-            app: null  # Placeholder for future apps building off UBI
-          - base: {name: "ubi-python", repo_name: "registry.access.redhat.com/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python", version_tag: "latest"}
-            app: null  # Placeholder for future apps building off UBI Python
-          - base: {name: "ubi-openjdk", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk17", version_tag: "latest"}
-            app: {name: "jenkins", repo_name: "localbuild/ubi-openjdk", dockerfile: "Dockerfile.jenkins", version_tag: "latest"}
+            app: null
+            build_args: null
+          - base: {name: "ubi-python", repo_name: "registry.access.redhat.com/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python", version_tag: "3.9"}
+            app: null
+            build_args: null
+          - base: {name: "ubi-openjdk", repo_name: "localbuild/ubi-openjdk", dockerfile: "Dockerfile.ubi8-openjdk17", version_tag: "17"}
+            app: {name: "jenkins", repo_name: "localbuild/jenkins", dockerfile: "Dockerfile.jenkins", version_tag: "2.449"}
+            build_args: {JENKINS_TAG: "jenkins", JENKINS_VERSION: "2.449"}
 
     steps:
       - uses: actions/checkout@v4
@@ -48,16 +51,17 @@ jobs:
         with:
           sarif_file: ${{ steps.base-vulnerability-scan.outputs.sarif }}
 
-      # Build and Scan App Container (Jenkins)
-      - name: Build Jenkins Docker Image
+      # Build and Scan App Container (if applicable)
+      - name: Build App Docker Image (if applicable)
         if: matrix.container.app != null
         run: |
           docker build . \
             --file ${{ matrix.container.app.dockerfile }} \
-            --build-arg BASE_IMAGE="localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.base.version_tag }}" \
+            --build-arg BASE_IMAGE="localbuild/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}" \
+            $(if [ "${{ matrix.container.build_args }}" != "null" ]; then for key in ${{ to_json(matrix.container.build_args) | from_json | keys }}; do echo "--build-arg $key=${{ matrix.container.build_args[$key] }}"; done; fi) \
             --tag "localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}"
 
-      - name: Vulnerability scan Jenkins image
+      - name: Vulnerability scan app image
         if: matrix.container.app != null
         id: app-vulnerability-scan
         uses: anchore/scan-action@v3
@@ -67,7 +71,7 @@ jobs:
           severity-cutoff: critical
           fail-build: false
 
-      - name: Upload Jenkins Vulnerability Scan
+      - name: Upload App Vulnerability Scan
         if: matrix.container.app != null
         uses: github/codeql-action/upload-sarif@v3
         with:
@@ -90,8 +94,8 @@ jobs:
           name: "OpenSCAP Scan Results - ${{ matrix.container.base.name }}"
           path: base-openscap-output
 
-      # OpenSCAP Scan for Jenkins Container
-      - name: Run OpenSCAP Scan for Jenkins
+      # OpenSCAP Scan for App Container (if applicable)
+      - name: Run OpenSCAP Scan for App
         if: matrix.container.app != null
         run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}" --tag "localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}-scap"
 
@@ -103,7 +107,7 @@ jobs:
           path: /tmp/openscap.html
           destination: app-openscap-output
 
-      - name: Upload OpenSCAP Results for Jenkins
+      - name: Upload OpenSCAP Results for App
         if: matrix.container.app != null
         uses: actions/upload-artifact@v4
         with:
@@ -120,11 +124,16 @@ jobs:
           docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}"
           docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.base.repo_name }}:latest"
 
-      # Tag and Push Jenkins Docker Image
-      - name: Tag and Push Jenkins Docker Image
+      # Tag and Push App Docker Image (if applicable)
+      - name: Tag and Push App Docker Image
         if: github.event_name == 'push' && matrix.container.app != null
         run: |
           docker tag "localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}"
           docker tag "localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.app.repo_name }}:latest"
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.app.repo_name }}:latest"
+
+      - name: Docker logout
+        if: github.event_name == 'push'
+        run: docker logout
