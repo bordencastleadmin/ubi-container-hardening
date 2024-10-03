@@ -13,6 +13,10 @@ env:
 jobs:
   build-base-containers:
     runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:19.03.12
+        options: --privileged
     strategy:
       matrix:
         base_container:
@@ -41,7 +45,7 @@ jobs:
             --tag "localbuild/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}"
 
       # Save Docker layers for base images
-      - name: Save Docker layers for base images
+      - name: Save Docker cache
         uses: actions/cache@v3
         with:
           path: /tmp/.docker-cache
@@ -99,17 +103,20 @@ jobs:
   build-app-containers:
     runs-on: ubuntu-latest
     needs: build-base-containers
+    services:
+      docker:
+        image: docker:19.03.12
+        options: --privileged
     strategy:
       matrix:
         app_container:
           - {name: "jenkins", repo_name: "localbuild/jenkins", dockerfile: "Dockerfile.jenkins", version_tag: "2.449", base_image: "localbuild/ubi-openjdk:latest"}
-          # Add additional app containers here.
 
     steps:
       - uses: actions/checkout@v4
 
       # Load cached Docker layers for base images
-      - name: Load cached Docker layers for base images
+      - name: Load Docker cache
         uses: actions/cache@v3
         with:
           path: /tmp/.docker-cache
