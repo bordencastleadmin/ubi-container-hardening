@@ -27,11 +27,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Build base images locally from RedHat registry (without buildx or cache)
+      # Build base images locally from RedHat registry, adding security settings (BASE_IMAGE as repo_name)
       - name: Build Base Docker Image
         run: |
           docker build . \
             --file ${{ matrix.base_container.dockerfile }} \
+            --build-arg BASE_IMAGE="${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}" \
             --tag "localbuild/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}"
 
       # Vulnerability scan for the base images
