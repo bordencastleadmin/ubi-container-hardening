@@ -27,28 +27,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Load Docker cache (for base containers, without buildx)
-      - name: Load Docker Cache
-        uses: actions/cache@v3
-        with:
-          path: /var/lib/docker
-          key: docker-build-${{ matrix.base_container.repo_name }}-${{ matrix.base_container.version_tag }}
-          restore-keys: |
-            docker-build-
-
-      # Build base images locally from RedHat registry (without buildx)
+      # Build base images locally from RedHat registry (without buildx or cache)
       - name: Build Base Docker Image
         run: |
           docker build . \
             --file ${{ matrix.base_container.dockerfile }} \
             --tag "localbuild/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}"
-
-      # Save Docker layers for base images
-      - name: Save Docker Cache
-        uses: actions/cache@v3
-        with:
-          path: /var/lib/docker
-          key: docker-build-${{ matrix.base_container.repo_name }}-${{ matrix.base_container.version_tag }}
 
       # Vulnerability scan for the base images
       - name: Vulnerability scan base image
@@ -118,7 +102,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Load cache from previous builds
+      # Load cache for app containers
       - name: Load Docker Cache for App Containers
         uses: actions/cache@v3
         with:
@@ -136,7 +120,7 @@ jobs:
             --load \
             --tag "${{ matrix.app_container.repo_name }}:${{ matrix.app_container.version_tag }}"
 
-      # Save cache from build
+      # Save cache from app container build
       - name: Save Docker Cache for App Containers
         uses: actions/cache@v3
         with:
