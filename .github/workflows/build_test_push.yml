@@ -58,7 +58,9 @@ jobs:
           docker build . \
             --file ${{ matrix.container.app.dockerfile }} \
             --build-arg BASE_IMAGE="localbuild/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}" \
-            $(if [ "${{ matrix.container.build_args }}" != "null" ]; then for key in ${{ to_json(matrix.container.build_args) | from_json | keys }}; do echo "--build-arg $key=${{ matrix.container.build_args[$key] }}"; done; fi) \
+            $(if [[ "${{ matrix.container.build_args }}" != "null" ]]; then \
+              echo "--build-arg JENKINS_TAG=${{ matrix.container.build_args.JENKINS_TAG }} --build-arg JENKINS_VERSION=${{ matrix.container.build_args.JENKINS_VERSION }}"; \
+            fi) \
             --tag "localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}"
 
       - name: Vulnerability scan app image
