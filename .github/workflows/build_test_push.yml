@@ -27,7 +27,7 @@ jobs:
         run: |
           docker build . \
             --file ${{ matrix.container.dockerfile }} \
-            --build-arg CONTAINER_VERSION_TAG="${{ matrix.container.repo_name }}" \
+            --build-arg BASE_IMAGE="${{ matrix.container.repo_name }}" \
             --tag "localbuild/${{ matrix.container.repo_name }}"
       - name: Vulnerability scan image
         id: vulnerability-scan
