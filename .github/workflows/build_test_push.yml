@@ -28,13 +28,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Build and push Base Containers to the local registry
+      # Build base images from RedHat registry
       - name: Build Base Docker Image
         run: |
           docker build . \
             --file ${{ matrix.base_container.dockerfile }} \
             --build-arg BASE_IMAGE="${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}" \
-            --tag "localhost:5000/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}" && \
+            --tag "${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}"
+
+      # Retag and push Base Containers to the local registry
+      - name: Retag and Push to Local Registry
+        run: |
+          docker tag "${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}" "localhost:5000/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}" && \
           docker push "localhost:5000/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}"
 
       # Vulnerability scan for the base images
