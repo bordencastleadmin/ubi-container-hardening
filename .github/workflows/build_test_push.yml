@@ -27,14 +27,16 @@ jobs:
       # Build Docker images from RedHat registry
       - name: Build Docker Image
         run: |
+          if [ "${{ matrix.container.build_args }}" != "null" ]; then
+            build_args=$(for key in $(echo ${{ matrix.container.build_args }} | jq -r 'keys[]'); do echo "--build-arg $key=${{ matrix.container.build_args[$key] }}"; done)
+          else
+            build_args=""
+          fi
+
           docker build . \
             --file ${{ matrix.container.dockerfile }} \
             --build-arg BASE_IMAGE="${{ matrix.container.repo }}:${{ matrix.container.version_tag }}" \
-            $(if [[ "${{ matrix.container.build_args }}" != "null" ]]; then \
-              for key in $(echo ${{ to_json(matrix.container.build_args) }} | jq -r 'keys[]'); do \
-                echo "--build-arg $key=${{ matrix.container.build_args[${key}] }}"; \
-              done; \
-            fi) \
+            $build_args \
             --tag "${{ matrix.container.container_name }}:${{ matrix.container.version_tag }}"
 
       # Vulnerability scan for the images
