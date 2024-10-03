@@ -19,7 +19,7 @@ jobs:
           - {repo: "registry.access.redhat.com/ubi8", container_name: "ubi", dockerfile: "Dockerfile.ubi8", version_tag: "8.10", build_args: null}
           - {repo: "registry.access.redhat.com/ubi8", container_name: "python-39", dockerfile: "Dockerfile.ubi8-python", version_tag: "latest", build_args: null}
           - {repo: "registry.access.redhat.com/ubi8", container_name: "openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk17", version_tag: "latest", build_args: null}
-          - {repo: "registry.access.redhat.com/ubi8/openjdk-17", container_name: "jenkins", dockerfile: "Dockerfile.jenkins", version_tag: "2.449", build_args: "--build-arg JENKINS_TAG=jenkins --build-arg JENKINS_VERSION=2.449"}
+          - {repo: "registry.access.redhat.com/ubi8/openjdk-17", container_name: "jenkins", dockerfile: "Dockerfile.jenkins", version_tag: "2.449", build_args: "--build-arg BASE_IMAGE=registry.access.redhat.com/ubi8/openjdk-17:latest --build-arg JENKINS_TAG=jenkins --build-arg JENKINS_VERSION=2.449"}
 
     steps:
       - uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
         run: |
           docker build . \
             --file ${{ matrix.container.dockerfile }} \
-            --build-arg BASE_IMAGE="${{ matrix.container.repo }}:${{ matrix.container.version_tag }}" \
+            --build-arg BASE_IMAGE="${{ matrix.container.repo }}:latest" \
             ${{ matrix.container.build_args }} \
             --tag "${{ matrix.container.container_name }}:${{ matrix.container.version_tag }}"
 
@@ -110,3 +110,4 @@ jobs:
       - name: Docker logout
         if: github.event_name == 'push'
         run: docker logout
+Key Updates:
