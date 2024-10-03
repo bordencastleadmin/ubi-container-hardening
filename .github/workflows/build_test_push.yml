@@ -23,13 +23,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Build and tag the base Docker images locally from RedHat registry
+      # Load Docker cache (restoring previous cache if available)
+      - name: Load Docker cache
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.docker-cache
+          key: docker-build-${{ matrix.base_container.repo_name }}-${{ matrix.base_container.version_tag }}
+          restore-keys: |
+            docker-build-
+
+      # Build the base Docker images locally from RedHat registry
       - name: Build Base Docker Image
         run: |
           docker build . \
             --file ${{ matrix.base_container.dockerfile }} \
             --build-arg BASE_IMAGE="${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}" \
             --tag "localbuild/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}"
+
+      # Save Docker cache after building the image
+      - name: Save Docker cache
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.docker-cache
+          key: docker-build-${{ matrix.base_container.repo_name }}-${{ matrix.base_container.version_tag }}
 
       # Vulnerability scan for the base images
       - name: Vulnerability scan base image
@@ -92,7 +108,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Build App Containers using the base images built in the previous step
+      # Load Docker cache (restoring previously cached base image)
+      - name: Load Docker cache
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.docker-cache
+          key: docker-build-localbuild-ubi-openjdk-latest
+
+      # Build App Containers using the cached base images
       - name: Build App Docker Image
         run: |
           docker build . \
