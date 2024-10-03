@@ -1,4 +1,4 @@
- FROM docker.io/bordenit/ubi8-openjdk-17:latest AS jre-build
+FROM ${BASE_IMAGE}
 
 ENV LANG C.UTF-8
 
