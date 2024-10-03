@@ -32,7 +32,7 @@ jobs:
           restore-keys: |
             docker-build-
 
-      # Build the base Docker images locally from RedHat registry
+      # Build base images locally from RedHat registry
       - name: Build Base Docker Image
         run: |
           docker build . \
@@ -40,8 +40,8 @@ jobs:
             --build-arg BASE_IMAGE="${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}" \
             --tag "localbuild/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}"
 
-      # Save Docker cache after building the image
-      - name: Save Docker cache
+      # Save Docker layers for base images
+      - name: Save Docker layers for base images
         uses: actions/cache@v3
         with:
           path: /tmp/.docker-cache
@@ -108,8 +108,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Load Docker cache (restoring previously cached base image)
-      - name: Load Docker cache
+      # Load cached Docker layers for base images
+      - name: Load cached Docker layers for base images
         uses: actions/cache@v3
         with:
           path: /tmp/.docker-cache
