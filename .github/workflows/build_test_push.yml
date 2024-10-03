@@ -16,96 +16,156 @@ jobs:
     strategy:
       matrix:
         container:
-          - {name: "ubi", repo_name: "registry.access.redhat.com/ubi8", dockerfile: "Dockerfile.ubi8"}
-          - {name: "ubi-python", repo_name: "registry.access.redhat.com/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python"}
-          - {name: "ubi-openjdk", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk17"}
-    
+          - base: {name: "ubi", repo_name: "registry.access.redhat.com/ubi8", dockerfile: "Dockerfile.ubi8", version_tag: "8.10"}
+            app: null  # Placeholder for future apps building off UBI
+          - base: {name: "ubi-python", repo_name: "registry.access.redhat.com/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python", version_tag: "latest"}
+            app: null  # Placeholder for future apps building off UBI Python
+          - base: {name: "ubi-openjdk", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk17", version_tag: "latest"}
+            app: {name: "jenkins-openjdk", repo_name: "jenkins/jenkins:lts", dockerfile: "Dockerfile.jenkins-openjdk", version_tag: "lts"}
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build the Docker image
+      # Build and Scan Base Container
+      - name: Build Base Docker Image
         run: |
           docker build . \
-            --file ${{ matrix.container.dockerfile }} \
-            --build-arg CONTAINER_VERSION_TAG="${{ matrix.container.repo_name }}" \
-            --tag "localbuild/${{ matrix.container.repo_name }}"
+            --file ${{ matrix.container.base.dockerfile }} \
+            --build-arg CONTAINER_VERSION_TAG="${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}" \
+            --tag "localbuild/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}"
 
-      - name: Vulnerability scan image
-        id: vulnerability-scan
+      - name: Vulnerability scan base image
+        id: base-vulnerability-scan
         uses: anchore/scan-action@v3
         with:
-          image: "localbuild/${{ matrix.container.repo_name }}"
+          image: "localbuild/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}"
           only-fixed: true
           severity-cutoff: critical
           fail-build: false
 
-      - name: Upload Vulnerability Scan
+      - name: Upload Base Vulnerability Scan
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
+          sarif_file: ${{ steps.base-vulnerability-scan.outputs.sarif }}
 
-      - name: Run DoD SCAP Scan
-        run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-dodscap"
+      # Build and Scan App Container (if applicable)
+      - name: Build App Docker Image (if applicable)
+        if: matrix.container.app != null
+        run: |
+          docker build . \
+            --file ${{ matrix.container.app.dockerfile }} \
+            --build-arg BASE_IMAGE="localbuild/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}" \
+            --tag "localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}"
 
-      - name: Extract SCAP Results
-        uses: shrink/actions-docker-extract@v3
+      - name: Vulnerability scan app image
+        if: matrix.container.app != null
+        id: app-vulnerability-scan
+        uses: anchore/scan-action@v3
         with:
-          image: "localbuild/${{ matrix.container.repo_name }}-dodscap"
-          path: /root/SCC/Sessions
-          destination: ubi-scap-output
+          image: "localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}"
+          only-fixed: true
+          severity-cutoff: critical
+          fail-build: false
 
-      - name: Upload SCAP Results
-        uses: actions/upload-artifact@v4
+      - name: Upload App Vulnerability Scan
+        if: matrix.container.app != null
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          name: "SCAP Scan Results - ${{ matrix.container.name }}"
-          path: ubi-scap-output
+          sarif_file: ${{ steps.app-vulnerability-scan.outputs.sarif }}
 
-      - name: OpenSCAP Scan
-        run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-scap"
+      # OpenSCAP Scan for Base Container
+      - name: Run OpenSCAP Scan for Base
+        run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}" --tag "localbuild/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}-scap"
 
       - uses: shrink/actions-docker-extract@v3
-        id: "ubi-extract-openscap"
+        id: "base-extract-openscap"
         with:
-          image: "localbuild/${{ matrix.container.repo_name }}-scap"
+          image: "localbuild/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}-scap"
           path: /tmp/openscap.html
-          destination: ubi-openscap-output
+          destination: base-openscap-output
 
-      - name: Upload OpenSCAP Results
+      - name: Upload OpenSCAP Results for Base
         uses: actions/upload-artifact@v4
         with:
-          name: "OpenSCAP Scan Results - ${{ matrix.container.name }}"
-          path: ubi-openscap-output
+          name: "OpenSCAP Scan Results - ${{ matrix.container.base.name }}"
+          path: base-openscap-output
 
-      - name: Run Inspec Scan
-        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-inspec"
+      # OpenSCAP Scan for App Container (if applicable)
+      - name: Run OpenSCAP Scan for App
+        if: matrix.container.app != null
+        run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}" --tag "localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}-scap"
 
-      - name: Extract Inspec Results
+      - uses: shrink/actions-docker-extract@v3
+        id: "app-extract-openscap"
+        if: matrix.container.app != null
+        with:
+          image: "localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}-scap"
+          path: /tmp/openscap.html
+          destination: app-openscap-output
+
+      - name: Upload OpenSCAP Results for App
+        if: matrix.container.app != null
+        uses: actions/upload-artifact@v4
+        with:
+          name: "OpenSCAP Scan Results - ${{ matrix.container.app.name }}"
+          path: app-openscap-output
+
+      # Inspec Scan for Base Container
+      - name: Run Inspec Scan for Base
+        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}" --tag "localbuild/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}-inspec"
+
+      - name: Extract Inspec Results for Base
         uses: shrink/actions-docker-extract@v3
         with:
-          image: "localbuild/${{ matrix.container.repo_name }}-inspec"
+          image: "localbuild/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}-inspec"
           path: /tmp/junit.xml
-          destination: ubi-inspec-output
+          destination: base-inspec-output
 
-      - name: Publish Inspec Test Results
+      - name: Publish Inspec Test Results for Base
         uses: EnricoMi/publish-unit-test-result-action/linux@v2
         with:
           files: |
-            ubi-inspec-output/junit.xml
+            base-inspec-output/junit.xml
 
-      - name: Upload Inspec Scan Results
-        uses: actions/upload-artifact@v4
+      # Inspec Scan for App Container (if applicable)
+      - name: Run Inspec Scan for App
+        if: matrix.container.app != null
+        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}" --tag "localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}-inspec"
+
+      - name: Extract Inspec Results for App
+        if: matrix.container.app != null
+        uses: shrink/actions-docker-extract@v3
         with:
-          name: "Inspec Scan Results - ${{ matrix.container.name }}"
-          path: ubi-inspec-output
+          image: "localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}-inspec"
+          path: /tmp/junit.xml
+          destination: app-inspec-output
 
-      - name: Tag and Push Docker image
+      - name: Publish Inspec Test Results for App
+        if: matrix.container.app != null
+        uses: EnricoMi/publish-unit-test-result-action/linux@v2
+        with:
+          files: |
+            app-inspec-output/junit.xml
+
+      # Tag and Push Base Docker Image
+      - name: Tag and Push Base Docker Image
         if: github.event_name == 'push'
         run: |
-          docker tag "localbuild/${{ matrix.container.repo_name }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}:latest"
-          docker tag "localbuild/${{ matrix.container.repo_name }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}:${{ github.sha }}"
+          docker tag "localbuild/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}"
+          docker tag "localbuild/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.base.repo_name }}:latest"
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}:latest"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}:${{ github.sha }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.base.repo_name }}:${{ matrix.container.base.version_tag }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.base.repo_name }}:latest"
+
+      # Tag and Push App Docker Image (if applicable)
+      - name: Tag and Push App Docker Image
+        if: github.event_name == 'push' && matrix.container.app != null
+        run: |
+          docker tag "localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}"
+          docker tag "localbuild/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.app.repo_name }}:latest"
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.app.repo_name }}:${{ matrix.container.app.version_tag }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.app.repo_name }}:latest"
 
       - name: Docker logout
         if: github.event_name == 'push'
