@@ -27,35 +27,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Set up Docker Buildx
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      # Load cache from previous builds
+      # Load Docker cache (for base containers, without buildx)
       - name: Load Docker Cache
         uses: actions/cache@v3
         with:
-          path: /tmp/.buildx-cache
-          key: buildx-${{ matrix.base_container.repo_name }}-${{ matrix.base_container.version_tag }}
+          path: /var/lib/docker
+          key: docker-build-${{ matrix.base_container.repo_name }}-${{ matrix.base_container.version_tag }}
           restore-keys: |
-            buildx-${{ matrix.base_container.repo_name }}
+            docker-build-
 
-      # Build base images with caching enabled
+      # Build base images locally from RedHat registry (without buildx)
       - name: Build Base Docker Image
         run: |
-          docker buildx build . \
+          docker build . \
             --file ${{ matrix.base_container.dockerfile }} \
-            --tag "localbuild/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}" \
-            --cache-from=type=local,src=/tmp/.buildx-cache \
-            --cache-to=type=local,dest=/tmp/.buildx-cache,mode=max \
-            --load
+            --tag "localbuild/${{ matrix.base_container.repo_name }}:${{ matrix.base_container.version_tag }}"
 
-      # Save cache from build
+      # Save Docker layers for base images
       - name: Save Docker Cache
         uses: actions/cache@v3
         with:
-          path: /tmp/.buildx-cache
-          key: buildx-${{ matrix.base_container.repo_name }}-${{ matrix.base_container.version_tag }}
+          path: /var/lib/docker
+          key: docker-build-${{ matrix.base_container.repo_name }}-${{ matrix.base_container.version_tag }}
 
       # Vulnerability scan for the base images
       - name: Vulnerability scan base image
@@ -121,19 +114,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Set up Docker Buildx
+      # Set up Docker Buildx (for app containers)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
       # Load cache from previous builds
-      - name: Load Docker Cache
+      - name: Load Docker Cache for App Containers
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
           key: buildx-localbuild-ubi-openjdk-latest
 
-      # Build App Containers using the cached base images
-      - name: Build App Docker Image
+      # Build App Containers using buildx and cache
+      - name: Build App Docker Image (with Buildx)
         run: |
           docker buildx build . \
             --file ${{ matrix.app_container.dockerfile }} \
@@ -144,7 +137,7 @@ jobs:
             --tag "${{ matrix.app_container.repo_name }}:${{ matrix.app_container.version_tag }}"
 
       # Save cache from build
-      - name: Save Docker Cache
+      - name: Save Docker Cache for App Containers
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
