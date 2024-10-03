@@ -15,7 +15,7 @@ COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencie
 RUN ${BUILDER}/install-dependencies.sh
 
 COPY --chmod=0755 scripts/cleanup-microdnf.sh ${BUILDER}/cleanup-microdnf.sh
-RUN ${BUILDER}/cleanup-microdnf.sh
+RUN ${BUILDER}/cleanup-dnf.sh
 
 #RUN ln -s /usr/bin/microdnf /usr/bin/dnf
 
