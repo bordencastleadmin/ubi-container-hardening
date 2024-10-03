@@ -23,17 +23,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Pull base image from Red Hat
+        run: |
+          docker pull ${{ matrix.container.repo_name }}
+
+      - name: Get base image version tag
+        id: get-version
+        run: |
+          VERSION=$(docker inspect --format '{{ index .RepoTags 0 }}' ${{ matrix.container.repo_name }} | awk -F ':' '{print $2}')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Build the Docker image
         run: |
           docker build . \
             --file ${{ matrix.container.dockerfile }} \
             --build-arg BASE_IMAGE="${{ matrix.container.repo_name }}" \
-            --tag "localbuild/${{ matrix.container.repo_name }}"
+            --tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
+
       - name: Vulnerability scan image
         id: vulnerability-scan
         uses: anchore/scan-action@v3
         with:
-          image: "localbuild/${{ matrix.container.repo_name }}"
+          image: "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
           only-fixed: true
           severity-cutoff: critical
           fail-build: false
@@ -44,12 +55,12 @@ jobs:
           sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
 
       - name: Run DoD SCAP Scan
-        run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-dodscap"
+        run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-dodscap"
 
       - name: Extract SCAP Results
         uses: shrink/actions-docker-extract@v3
         with:
-          image: "localbuild/${{ matrix.container.repo_name }}-dodscap"
+          image: "localbuild/${{ matrix.container.name }}-dodscap"
           path: /root/SCC/Sessions
           destination: ubi-scap-output
 
@@ -60,12 +71,12 @@ jobs:
           path: ubi-scap-output
 
       - name: OpenSCAP Scan
-        run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-scap"
+        run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-scap"
 
       - uses: shrink/actions-docker-extract@v3
         id: "ubi-extract-openscap"
         with:
-          image: "localbuild/${{ matrix.container.repo_name }}-scap"
+          image: "localbuild/${{ matrix.container.name }}-scap"
           path: /tmp/openscap.html
           destination: ubi-openscap-output
 
@@ -76,12 +87,12 @@ jobs:
           path: ubi-openscap-output
 
       - name: Run Inspec Scan
-        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.repo_name }}" --tag "localbuild/${{ matrix.container.repo_name }}-inspec"
+        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-inspec"
 
       - name: Extract Inspec Results
         uses: shrink/actions-docker-extract@v3
         with:
-          image: "localbuild/${{ matrix.container.repo_name }}-inspec"
+          image: "localbuild/${{ matrix.container.name }}-inspec"
           path: /tmp/junit.xml
           destination: ubi-inspec-output
 
@@ -90,6 +101,7 @@ jobs:
         with:
           files: |
             ubi-inspec-output/junit.xml
+
       - name: Upload Inspec Scan Results
         uses: actions/upload-artifact@v4
         with:
@@ -99,11 +111,14 @@ jobs:
       - name: Tag and Push Docker image
         if: github.event_name == 'push'
         run: |
-          docker tag "localbuild/${{ matrix.container.repo_name }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}:latest"
-          docker tag "localbuild/${{ matrix.container.repo_name }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}:${{ github.sha }}"
+          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
+          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
+          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}:latest"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.repo_name }}:${{ github.sha }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
+
       - name: Docker logout
         if: github.event_name == 'push'
         run: docker logout
