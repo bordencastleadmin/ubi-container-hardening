@@ -28,6 +28,7 @@ jobs:
       - name: Build Docker Image
         run: |
           docker build . \
+            --no-cache \
             --file ${{ matrix.container.dockerfile }} \
             --build-arg BASE_IMAGE="${{ matrix.container.repo }}:latest" \
             ${{ matrix.container.build_args }} \
