@@ -25,6 +25,7 @@ COPY --chmod=0755 scripts/cleanup-microdnf.sh ${BUILDER}/cleanup-microdnf.sh
 RUN ${BUILDER}/cleanup-microdnf.sh
 
 RUN ln -s /usr/bin/microdnf /usr/bin/dnf
+WORKDIR /home/jboss
 
 RUN dnf install --disableplugin=subscription-manager --setopt=install_weak_deps=0 --setopt=tsflags=nodocs -y \
         fontconfig \
