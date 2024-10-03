@@ -23,7 +23,7 @@ jobs:
             app: null
             build_args: null
           - base: {name: "ubi-openjdk", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk17", version_tag: "latest"}
-            app: {name: "jenkins", repo_name: "localbuild/registry.access.redhat.com/ubi8/openjdk-17", dockerfile: "Dockerfile.jenkins", version_tag: "2.449"}
+            app: {name: "jenkins", repo_name: "localbuild/jenkins", dockerfile: "Dockerfile.jenkins", version_tag: "2.449"}
             build_args: {JENKINS_TAG: "jenkins", JENKINS_VERSION: "2.449"}
 
     steps:
