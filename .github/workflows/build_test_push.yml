@@ -19,10 +19,10 @@ jobs:
           - base: {name: "ubi", repo_name: "registry.access.redhat.com/ubi8", dockerfile: "Dockerfile.ubi8", version_tag: "8.10"}
             app: null
             build_args: null
-          - base: {name: "ubi-python", repo_name: "registry.access.redhat.com/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python", version_tag: "3.9"}
+          - base: {name: "ubi-python", repo_name: "registry.access.redhat.com/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python", version_tag: "latest"}
             app: null
             build_args: null
-          - base: {name: "ubi-openjdk", repo_name: "localbuild/ubi-openjdk", dockerfile: "Dockerfile.ubi8-openjdk17", version_tag: "17"}
+          - base: {name: "ubi-openjdk", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk17", version_tag: "latest"}
             app: {name: "jenkins", repo_name: "localbuild/jenkins", dockerfile: "Dockerfile.jenkins", version_tag: "2.449"}
             build_args: {JENKINS_TAG: "jenkins", JENKINS_VERSION: "2.449"}
 
