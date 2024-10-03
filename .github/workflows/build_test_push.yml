@@ -19,7 +19,7 @@ jobs:
           - {repo: "registry.access.redhat.com/ubi8", container_name: "ubi", dockerfile: "Dockerfile.ubi8", version_tag: "8.10", build_args: null}
           - {repo: "registry.access.redhat.com/ubi8", container_name: "python-39", dockerfile: "Dockerfile.ubi8-python", version_tag: "latest", build_args: null}
           - {repo: "registry.access.redhat.com/ubi8", container_name: "openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk17", version_tag: "latest", build_args: null}
-          - {repo: "registry.access.redhat.com/ubi8/openjdk-17", container_name: "jenkins", dockerfile: "Dockerfile.jenkins", version_tag: "2.449", build_args: "--build-arg BASE_IMAGE=registry.access.redhat.com/ubi8/openjdk-17:latest --build-arg JENKINS_TAG=jenkins --build-arg JENKINS_VERSION=2.449 --build-arg TARGETARCH=amd64"}
+          - {repo: "registry.access.redhat.com/ubi8/openjdk-17", container_name: "jenkins", dockerfile: "Dockerfile.jenkins", version_tag: "2.449", build_args: "--build-arg BASE_IMAGE=registry.access.redhat.com/ubi8/openjdk-17:latest --build-arg JENKINS_TAG=jenkins --build-arg JENKINS_VERSION=2.462.3 --build-arg TARGETARCH=amd64"}
 
     steps:
       - uses: actions/checkout@v4
