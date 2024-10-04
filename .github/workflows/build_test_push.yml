@@ -109,7 +109,7 @@ jobs:
           path: ubi-inspec-output
 
       - name: Tag and Push Docker image
-        if: github.event_name == 'push'
+#        if: github.event_name == 'push'
         run: |
           docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
           docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
