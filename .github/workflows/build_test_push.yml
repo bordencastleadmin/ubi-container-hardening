@@ -1,0 +1,132 @@
+name: Build, Test, and Push Containers
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        container:
+          - {name: "ubi8", repo_name: "registry.access.redhat.com/ubi8", dockerfile: "Dockerfile.ubi8", goss_file: "goss-ubi8.yaml"}
+          - {name: "ubi-python-39", repo_name: "registry.access.redhat.com/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-python-39.yaml"}
+          - {name: "ubi-python-311", repo_name: "registry.access.redhat.com/ubi8/python-311", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-python-311.yaml"}
+          - {name: "ubi-openjdk-17", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-openjdk-17.yaml"}
+          - {name: "ubi-openjdk-21", repo_name: "registry.access.redhat.com/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-openjdk-21.yaml"}
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pull base image from Red Hat
+        run: |
+          docker pull ${{ matrix.container.repo_name }}
+
+      - name: Get base image version tag
+        id: get-version
+        run: |
+          VERSION=$(docker inspect --format '{{ index .RepoTags 0 }}' ${{ matrix.container.repo_name }} | awk -F ':' '{print $2}')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Build the Docker image
+        run: |
+          docker build . \
+            --file ${{ matrix.container.dockerfile }} \
+            --build-arg BASE_IMAGE="${{ matrix.container.repo_name }}" \
+            --tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
+
+      - name: Vulnerability scan image
+        id: vulnerability-scan
+        uses: anchore/scan-action@v3
+        with:
+          image: "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
+          only-fixed: true
+          severity-cutoff: critical
+          fail-build: false
+
+      - name: Upload Vulnerability Scan
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
+
+#      - name: Run Goss tests
+#        run: |
+#          docker run --rm -d --name goss_test_container "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
+#          docker run --rm --network container:goss_test_container -v $(pwd)/${{ matrix.container.goss_file }}:/goss/goss.yaml aelsabbahy/goss:latest goss validate
+#          docker stop goss_test_container
+
+      - name: Run DoD SCAP Scan
+        run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-dodscap"
+
+      - name: Extract SCAP Results
+        uses: shrink/actions-docker-extract@v3
+        with:
+          image: "localbuild/${{ matrix.container.name }}-dodscap"
+          path: /root/SCC/Sessions
+          destination: ubi-scap-output
+
+      - name: Upload SCAP Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: "SCAP Scan Results - ${{ matrix.container.name }}"
+          path: ubi-scap-output
+
+      - name: OpenSCAP Scan
+        run: docker build . --file Dockerfile.Openscap --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-scap"
+
+      - uses: shrink/actions-docker-extract@v3
+        id: "ubi-extract-openscap"
+        with:
+          image: "localbuild/${{ matrix.container.name }}-scap"
+          path: /tmp/openscap.html
+          destination: ubi-openscap-output
+
+      - name: Upload OpenSCAP Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: "OpenSCAP Scan Results - ${{ matrix.container.name }}"
+          path: ubi-openscap-output
+
+      - name: Run Inspec Scan
+        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-inspec"
+
+      - name: Extract Inspec Results
+        uses: shrink/actions-docker-extract@v3
+        with:
+          image: "localbuild/${{ matrix.container.name }}-inspec"
+          path: /tmp/junit.xml
+          destination: ubi-inspec-output
+
+      - name: Publish Inspec Test Results
+        uses: EnricoMi/publish-unit-test-result-action/linux@v2
+        with:
+          files: |
+            ubi-inspec-output/junit.xml
+
+      - name: Upload Inspec Scan Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: "Inspec Scan Results - ${{ matrix.container.name }}"
+          path: ubi-inspec-output
+
+      - name: Tag and Push Docker image
+        if: github.event_name == 'push'
+        run: |
+          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
+          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
+          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
+
+      - name: Docker logout
+        if: github.event_name == 'push'
+        run: docker logout

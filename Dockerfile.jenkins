@@ -1,10 +1,32 @@
- FROM docker.io/bordenit/ubi8-openjdk-17:latest AS jre-build
+ARG BASE_IMAGE
+
+FROM ${BASE_IMAGE}
 
 ENV LANG C.UTF-8
 
 ARG TARGETARCH
 #ARG COMMIT_SHA
+
 USER root
+
+#Install Dependencies to Run STIGs
+ENV BUILDER=/tmp/builder
+
+#Install Dependencies
+USER root
+RUN microdnf install dnf -y
+
+RUN mkdir ${BUILDER}
+WORKDIR ${BUILDER}
+COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh
+RUN ${BUILDER}/install-dependencies.sh
+
+COPY --chmod=0755 scripts/cleanup-microdnf.sh ${BUILDER}/cleanup-microdnf.sh
+RUN ${BUILDER}/cleanup-microdnf.sh
+
+RUN ln -s /usr/bin/microdnf /usr/bin/dnf
+WORKDIR /home/jboss
+
 RUN dnf install --disableplugin=subscription-manager --setopt=install_weak_deps=0 --setopt=tsflags=nodocs -y \
         fontconfig \
         freetype \
@@ -72,7 +94,7 @@ ENV JENKINS_UC_EXPERIMENTAL=https://updates.jenkins.io/experimental
 ENV JENKINS_INCREMENTALS_REPO_MIRROR=https://repo.jenkins-ci.org/incrementals
 RUN chown -R ${user}:${group} "$JENKINS_HOME" "$REF"
 
-ARG PLUGIN_CLI_VERSION=2.12.15
+ARG PLUGIN_CLI_VERSION=2.13.0
 ARG PLUGIN_CLI_URL=https://github.com/jenkinsci/plugin-installation-manager-tool/releases/download/${PLUGIN_CLI_VERSION}/jenkins-plugin-manager-${PLUGIN_CLI_VERSION}.jar
 RUN curl -fsSL ${PLUGIN_CLI_URL} -o /opt/jenkins-plugin-manager.jar
 

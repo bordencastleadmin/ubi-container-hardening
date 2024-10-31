@@ -4,8 +4,8 @@ FROM ${CONTAINER}
 
 USER root
 WORKDIR /tmp
-RUN dnf install git -y
-RUN curl --tlsv1.3 -sSf --proto "=https" -L https://omnitruck.cinc.sh/install.sh | bash -s -- -v 18
+RUN dnf install git -y && \
+    curl --tlsv1.3 -sSf --proto "=https" -L https://omnitruck.cinc.sh/install.sh | bash -s -- -v 18
 COPY inspec-inputs.yml /tmp/
 RUN inspec exec https://github.com/mitre/redhat-enterprise-linux-8-stig-baseline/archive/refs/tags/v1.13.1.tar.gz --input-file /tmp/inspec-inputs.yml --tags container --reporter junit2:/tmp/junit.xml html:www/index.html 2>&1 || true
 

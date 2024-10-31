@@ -1,6 +1,7 @@
-ARG CONTAINER_VERSION_TAG="ubi8/openjdk-17"
+ARG BASE_IMAGE
 
-FROM registry.access.redhat.com/${CONTAINER_VERSION_TAG}
+FROM ${BASE_IMAGE}
+
 #Install Dependencies to Run STIGs
 ENV BUILDER=/tmp/builder
 
