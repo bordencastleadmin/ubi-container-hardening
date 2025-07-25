@@ -2,11 +2,13 @@
 dnf update -y
 dnf install mailx postfix unzip python3.11-pip git -y 
 pip3 install --upgrade pip 
-pip3 install ansible ansible-core
+pip3 install ansible "ansible-core==2.11.*"
 
 cat <<EOF >> harden-ubi8.yml
 ---
 - hosts: all
+  vars:
+    ansible_python_interpreter: /usr/libexec/platform-python
   roles:
      - ansible-role-rhel8-stig
 EOF
