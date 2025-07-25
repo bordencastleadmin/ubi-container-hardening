@@ -17,8 +17,8 @@ jobs:
       matrix:
         container:
           - {name: "ubi8", repo_name: "registry.access.redhat.com/ubi8", dockerfile: "Dockerfile.ubi8", goss_file: "goss-ubi8.yaml"}
-          - {name: "ubi-python-39", repo_name: "registry.access.redhat.com/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-python-39.yaml"}
-          - {name: "ubi-python-311", repo_name: "registry.access.redhat.com/ubi8/python-311", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-python-311.yaml"}
+          - {name: "ubi-python-39", repo_name: "registry.redhat.io/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-python-39.yaml"}
+          - {name: "ubi-python-311", repo_name: "registry.redhat.io/ubi8/python-311", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-python-311.yaml"}
           - {name: "ubi-openjdk-17", repo_name: "registry.access.redhat.com/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-openjdk-17.yaml"}
           - {name: "ubi-openjdk-21", repo_name: "registry.access.redhat.com/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-openjdk-21.yaml"}
     
