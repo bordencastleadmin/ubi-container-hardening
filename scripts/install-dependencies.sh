@@ -58,14 +58,14 @@ source ansibletemp/bin/activate \
     && RELEASE_INFO=$(curl -s https://api.github.com/repos/ComplianceAsCode/content/releases/latest) \
     && RELEASE_TAG=$(echo "$RELEASE_INFO" | grep '"tag_name":' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') \
     && RELEASE_URL=$(echo "$RELEASE_INFO" | grep '"zipball_url":' | sed -E 's/.*"zipball_url": "([^"]+)".*/\1/') \
-    && echo "Downloading release: $RELEASE_TAG" \
+    && echo "Fetching release v0.1.77..." \
+    && RELEASE_TAG="v0.1.77" \
+    && RELEASE_URL="https://github.com/ComplianceAsCode/content/archive/refs/tags/v0.1.77.zip" \
+    && echo "Downloading release archive: $RELEASE_TAG" \
     && curl -L -o content.zip "$RELEASE_URL" \
     && unzip -q content.zip -d temp_content \
     && mv temp_content/* content \
-    && rm -rf temp_content \
-    && rm content.zip \
-    && echo "=== Directory structure of 'content/' ===" \
-    && ls -l content \
+    && rm -rf temp_content content.zip \
     && echo "=== Full directory listing under 'content/' ===" \
     && ls -R content \
     && ansible-playbook -i "localhost," -c local "content/$PLAYBOOK_PATH" --skip-tags="$SKIP_TAGS"
