@@ -1,4 +1,4 @@
- Function to create appropriate playbook
+#Function to create appropriate playbook
 create_playbook() {
     local playbook_file="harden-ubi${OS_VERSION}.yml"
     local role_name=""
