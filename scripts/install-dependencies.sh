@@ -60,8 +60,9 @@ source ansibletemp/bin/activate \
     && RELEASE_URL=$(echo "$RELEASE_INFO" | grep '"zipball_url":' | sed -E 's/.*"zipball_url": "([^"]+)".*/\1/') \
     && echo "Downloading release: $RELEASE_TAG" \
     && curl -L -o content.zip "$RELEASE_URL" \
-    && unzip -q content.zip \
-    && mv ComplianceAsCode-content-* content \
+    && unzip -q content.zip -d temp_content \
+    && mv temp_content/* content \
+    && rm -rf temp_content \
     && rm content.zip \
     && ansible-playbook -i "localhost," -c local "content/$PLAYBOOK_PATH" --skip-tags="$SKIP_TAGS"
 
