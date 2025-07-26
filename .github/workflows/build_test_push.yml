@@ -1,305 +1,282 @@
 name: Build, Test, and Push Containers
 
 on:
-pull_request:
-branches: [ “main” ]
-push:
-branches: [ “main” ]
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
 
 env:
-DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
 jobs:
-build-test-push:
-runs-on: ubuntu-latest
-permissions:
-contents: read
-packages: write
-security-events: write # for uploading SARIF results
-actions: read
-strategy:
-matrix:
-container:
-- {name: “ubi8”, repo_name: “registry.redhat.io/ubi8”, dockerfile: “Dockerfile.ubi8”, goss_file: “goss-ubi8.yaml”}
-#- {name: “ubi9”, repo_name: “registry.redhat.io/ubi9”, dockerfile: “Dockerfile.ubi9”, goss_file: “goss-ubi9.yaml”}
-#- {name: “ubi10”, repo_name: “registry.redhat.io/ubi10”, dockerfile: “Dockerfile.ubi10”, goss_file: “goss-ubi10.yaml”}
-# UBI 8 Python variants
-- {name: “ubi8-python-39”, repo_name: “registry.redhat.io/ubi8/python-39”, dockerfile: “Dockerfile.ubi8-python”, goss_file: “goss-ubi8-python-39.yaml”}
-- {name: “ubi8-python-311”, repo_name: “registry.redhat.io/ubi8/python-311”, dockerfile: “Dockerfile.ubi8-python”, goss_file: “goss-ubi8-python-311.yaml”}
-# UBI 9 Python variants
-#- {name: “ubi9-python-39”, repo_name: “registry.redhat.io/ubi9/python-39”, dockerfile: “Dockerfile.ubi9-python”, goss_file: “goss-ubi9-python-39.yaml”}
-#- {name: “ubi9-python-311”, repo_name: “registry.redhat.io/ubi9/python-311”, dockerfile: “Dockerfile.ubi9-python”, goss_file: “goss-ubi9-python-311.yaml”}
-# UBI 10 Python variants  
-#- {name: “ubi10-python-39”, repo_name: “registry.redhat.io/ubi10/python-39”, dockerfile: “Dockerfile.ubi10-python”, goss_file: “goss-ubi10-python-39.yaml”}
-#- {name: “ubi10-python-311”, repo_name: “registry.redhat.io/ubi10/python-311”, dockerfile: “Dockerfile.ubi10-python”, goss_file: “goss-ubi10-python-311.yaml”}
-# UBI 8 OpenJDK variants
-- {name: “ubi8-openjdk-17”, repo_name: “registry.redhat.io/ubi8/openjdk-17”, dockerfile: “Dockerfile.ubi8-openjdk”, goss_file: “goss-ubi8-openjdk-17.yaml”}
-- {name: “ubi8-openjdk-21”, repo_name: “registry.redhat.io/ubi8/openjdk-21”, dockerfile: “Dockerfile.ubi8-openjdk”, goss_file: “goss-ubi8-openjdk-21.yaml”}
-# UBI 9 OpenJDK variants
-#- {name: “ubi9-openjdk-17”, repo_name: “registry.redhat.io/ubi9/openjdk-17”, dockerfile: “Dockerfile.ubi9-openjdk”, goss_file: “goss-ubi9-openjdk-17.yaml”}
-#- {name: “ubi9-openjdk-21”, repo_name: “registry.redhat.io/ubi9/openjdk-21”, dockerfile: “Dockerfile.ubi9-openjdk”, goss_file: “goss-ubi9-openjdk-21.yaml”}
-# UBI 10 OpenJDK variants
-#- {name: “ubi10-openjdk-17”, repo_name: “registry.redhat.io/ubi10/openjdk-17”, dockerfile: “Dockerfile.ubi10-openjdk”, goss_file: “goss-ubi10-openjdk-17.yaml”}
-#- {name: “ubi10-openjdk-21”, repo_name: “registry.redhat.io/ubi10/openjdk-21”, dockerfile: “Dockerfile.ubi10-openjdk”, goss_file: “goss-ubi10-openjdk-21.yaml”}
+  build-test-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write # for uploading SARIF results
+      actions: read
+    strategy:
+      matrix:
+        container:
+          - {name: "ubi8", repo_name: "registry.redhat.io/ubi8", dockerfile: "Dockerfile.ubi8", goss_file: "goss-ubi8.yaml"}
+          #- {name: "ubi9", repo_name: "registry.redhat.io/ubi9", dockerfile: "Dockerfile.ubi9", goss_file: "goss-ubi9.yaml"}
+          #- {name: "ubi10", repo_name: "registry.redhat.io/ubi10", dockerfile: "Dockerfile.ubi10", goss_file: "goss-ubi10.yaml"}
+          # UBI 8 Python variants
+          - {name: "ubi8-python-39", repo_name: "registry.redhat.io/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-ubi8-python-39.yaml"}
+          - {name: "ubi8-python-311", repo_name: "registry.redhat.io/ubi8/python-311", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-ubi8-python-311.yaml"}
+          # UBI 9 Python variants
+          #- {name: "ubi9-python-39", repo_name: "registry.redhat.io/ubi9/python-39", dockerfile: "Dockerfile.ubi9-python", goss_file: "goss-ubi9-python-39.yaml"}
+          #- {name: "ubi9-python-311", repo_name: "registry.redhat.io/ubi9/python-311", dockerfile: "Dockerfile.ubi9-python", goss_file: "goss-ubi9-python-311.yaml"}
+          # UBI 10 Python variants  
+          #- {name: "ubi10-python-39", repo_name: "registry.redhat.io/ubi10/python-39", dockerfile: "Dockerfile.ubi10-python", goss_file: "goss-ubi10-python-39.yaml"}
+          #- {name: "ubi10-python-311", repo_name: "registry.redhat.io/ubi10/python-311", dockerfile: "Dockerfile.ubi10-python", goss_file: "goss-ubi10-python-311.yaml"}
+          # UBI 8 OpenJDK variants
+          - {name: "ubi8-openjdk-17", repo_name: "registry.redhat.io/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-ubi8-openjdk-17.yaml"}
+          - {name: "ubi8-openjdk-21", repo_name: "registry.redhat.io/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-ubi8-openjdk-21.yaml"}
+          # UBI 9 OpenJDK variants
+          #- {name: "ubi9-openjdk-17", repo_name: "registry.redhat.io/ubi9/openjdk-17", dockerfile: "Dockerfile.ubi9-openjdk", goss_file: "goss-ubi9-openjdk-17.yaml"}
+          #- {name: "ubi9-openjdk-21", repo_name: "registry.redhat.io/ubi9/openjdk-21", dockerfile: "Dockerfile.ubi9-openjdk", goss_file: "goss-ubi9-openjdk-21.yaml"}
+          # UBI 10 OpenJDK variants
+          #- {name: "ubi10-openjdk-17", repo_name: "registry.redhat.io/ubi10/openjdk-17", dockerfile: "Dockerfile.ubi10-openjdk", goss_file: "goss-ubi10-openjdk-17.yaml"}
+          #- {name: "ubi10-openjdk-21", repo_name: "registry.redhat.io/ubi10/openjdk-21", dockerfile: "Dockerfile.ubi10-openjdk", goss_file: "goss-ubi10-openjdk-21.yaml"}
+    
+    steps:
+      - uses: actions/checkout@v4
 
-```
-steps:
-  - uses: actions/checkout@v4
+      # Login to Red Hat registries for authenticated access
+      - name: Log in to Red Hat Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: registry.redhat.io
+          username: ${{ secrets.REDHAT_USERNAME }}
+          password: ${{ secrets.REDHAT_PASSWORD }}
 
-  # Login to Red Hat registries for authenticated access
-  - name: Log in to Red Hat Container Registry
-    uses: docker/login-action@v3
-    with:
-      registry: registry.redhat.io
-      username: ${{ secrets.REDHAT_USERNAME }}
-      password: ${{ secrets.REDHAT_PASSWORD }}
+      - name: Pull base image from Red Hat
+        run: |
+          docker pull ${{ matrix.container.repo_name }}
 
-  - name: Pull base image from Red Hat
-    run: |
-      docker pull ${{ matrix.container.repo_name }}
+      - name: Get base image version tag
+        id: get-version
+        run: |
+          VERSION=$(docker inspect --format '{{ index .RepoTags 0 }}' ${{ matrix.container.repo_name }} | awk -F ':' '{print $2}')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-  - name: Get base image version tag
-    id: get-version
-    run: |
-      VERSION=$(docker inspect --format '{{ index .RepoTags 0 }}' ${{ matrix.container.repo_name }} | awk -F ':' '{print $2}')
-      echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Build the Docker image
+        run: |
+          docker build . \
+            --file ${{ matrix.container.dockerfile }} \
+            --build-arg BASE_IMAGE="${{ matrix.container.repo_name }}" \
+            --tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
 
-  - name: Build the Docker image
-    run: |
-      docker build . \
-        --file ${{ matrix.container.dockerfile }} \
-        --build-arg BASE_IMAGE="${{ matrix.container.repo_name }}" \
-        --tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
+      - name: Vulnerability scan image
+        id: vulnerability-scan
+        uses: anchore/scan-action@v3
+        with:
+          image: "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
+          only-fixed: true
+          severity-cutoff: critical
+          fail-build: false
 
-  - name: Vulnerability scan image
-    id: vulnerability-scan
-    uses: anchore/scan-action@v3
-    with:
-      image: "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
-      only-fixed: true
-      severity-cutoff: critical
-      fail-build: false
+      - name: Upload Vulnerability Scan
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
 
-  - name: Upload Vulnerability Scan
-    uses: github/codeql-action/upload-sarif@v3
-    with:
-      sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
-```
+#      - name: Run Goss tests
+#        run: |
+#          docker run --rm -d --name goss_test_container "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
+#          docker run --rm --network container:goss_test_container -v $(pwd)/${{ matrix.container.goss_file }}:/goss/goss.yaml aelsabbahy/goss:latest goss validate
+#          docker stop goss_test_container
 
-# - name: Run Goss tests
+#      - name: Run DoD SCAP Scan
+#        run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-dodscap"
 
-# run: |
+#      - name: Extract SCAP Results
+#        uses: shrink/actions-docker-extract@v3
+#        with:
+#          image: "localbuild/${{ matrix.container.name }}-dodscap"
+#          path: /root/SCC/Sessions
+#          destination: ubi-scap-output
 
-# docker run –rm -d –name goss_test_container “localbuild/${{ matrix.container.name }}:${{ env.VERSION }}”
+#      - name: Upload SCAP Results
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: "SCAP Scan Results - ${{ matrix.container.name }}"
+#          path: ubi-scap-output
 
-# docker run –rm –network container:goss_test_container -v $(pwd)/${{ matrix.container.goss_file }}:/goss/goss.yaml aelsabbahy/goss:latest goss validate
+      # ===== REPLACED OpenSCAP Section with Direct oscap-docker Integration =====
+      - name: Setup OpenSCAP scanning environment
+        run: |
+          # Install OpenSCAP tools in a container
+          docker run -d --name openscap-env \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v $(pwd):/workspace \
+            --workdir /workspace \
+            alpine:3.18.3
+          
+          # Install prerequisites in the Alpine container
+          docker exec openscap-env apk add curl docker openscap-docker npm gcompat unzip jq
+          docker exec openscap-env npm install -g "@microsoft/sarif-multitool@4.3.5"
+          docker exec openscap-env npm install -g "@mitre/saf@1.2.33"
+          
+          # Download SCAP Security Guide
+          docker exec openscap-env mkdir -p ssg
+          docker exec openscap-env curl "https://github.com/ComplianceAsCode/content/releases/download/v0.1.69/scap-security-guide-0.1.69.zip" -Lso "ssg/ssg.zip"
+          docker exec openscap-env unzip "ssg/ssg.zip" -d "ssg"
 
-# docker stop goss_test_container
-
-# - name: Run DoD SCAP Scan
-
-# run: docker build . –file Dockerfile.DoDscap –build-arg CONTAINER=“localbuild/${{ matrix.container.name }}:${{ env.VERSION }}” –tag “localbuild/${{ matrix.container.name }}-dodscap”
-
-# - name: Extract SCAP Results
-
-# uses: shrink/actions-docker-extract@v3
-
-# with:
-
-# image: “localbuild/${{ matrix.container.name }}-dodscap”
-
-# path: /root/SCC/Sessions
-
-# destination: ubi-scap-output
-
-# - name: Upload SCAP Results
-
-# uses: actions/upload-artifact@v4
-
-# with:
-
-# name: “SCAP Scan Results - ${{ matrix.container.name }}”
-
-# path: ubi-scap-output
-
-```
-  # ===== REPLACED OpenSCAP Section with Direct oscap-docker Integration =====
-  - name: Setup OpenSCAP scanning environment
-    run: |
-      # Install OpenSCAP tools in a container
-      docker run -d --name openscap-env \
-        -v /var/run/docker.sock:/var/run/docker.sock \
-        -v $(pwd):/workspace \
-        --workdir /workspace \
-        alpine:3.18.3
-      
-      # Install prerequisites in the Alpine container
-      docker exec openscap-env apk add curl docker openscap-docker npm gcompat unzip jq
-      docker exec openscap-env npm install -g "@microsoft/sarif-multitool@4.3.5"
-      docker exec openscap-env npm install -g "@mitre/saf@1.2.33"
-      
-      # Download SCAP Security Guide
-      docker exec openscap-env mkdir -p ssg
-      docker exec openscap-env curl "https://github.com/ComplianceAsCode/content/releases/download/v0.1.69/scap-security-guide-0.1.69.zip" -Lso "ssg/ssg.zip"
-      docker exec openscap-env unzip "ssg/ssg.zip" -d "ssg"
-
-  - name: Run OpenSCAP Docker Scan
-    run: |
-      set -e
-      IMAGE_NAME="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
-      
-      # Extract /etc/os-release to determine the appropriate SCAP profile
-      container_id=$(docker create "${IMAGE_NAME}")
-      if ! docker export "${container_id}" | tar -tvf - | grep -E '\setc/os-release( ->.*)?$' > /dev/null 2>&1 ; then
-        echo "::warning::The operating system used by ${IMAGE_NAME} could not be detected."
-        echo "::warning::This is likely a UBI-based image. Using RHEL 9 profile as default."
-        # For UBI images, we'll default to RHEL 9 profile (most current stable)
-        ssg="scap-security-guide-0.1.69/ssg-rhel9-ds.xml"
-        profile="xccdf_org.ssgproject.content_profile_standard"
-      else
-        docker cp -L "$container_id:/etc/os-release" .
-        docker rm "$container_id"
-        
-        # Determine which security guide to use based on /etc/os-release
-        version_id=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' os-release | sed 's/"//g')
-        id=$(awk -F= '$1=="ID" { print $2 ;}' os-release | sed 's/"//g')
-        
-        echo "::notice::Detected OS: ${id} ${version_id}"
-        
-        # Set appropriate SSG file based on detected OS
-        if [ "${id}" = "rhel" ] && echo "${version_id}" | grep -qE '^8(\..*)?$' ; then
-          ssg="scap-security-guide-0.1.69/ssg-rhel8-ds.xml"
-        elif [ "${id}" = "rhel" ] && echo "${version_id}" | grep -qE '^9(\..*)?$' ; then
-          ssg="scap-security-guide-0.1.69/ssg-rhel9-ds.xml"
-        elif [ "${id}" = "rhel" ] && echo "${version_id}" | grep -qE '^10(\..*)?$' ; then
-          ssg="scap-security-guide-0.1.69/ssg-rhel10-ds.xml"
-        else
-          echo "::warning::No specific configuration for ${id} ${version_id}, using RHEL 9 as default"
-          ssg="scap-security-guide-0.1.69/ssg-rhel9-ds.xml"
-        fi
-        
-        # Select the best available profile
-        profile=""
-        for p in xccdf_org.ssgproject.content_profile_cis_level2_server xccdf_org.ssgproject.content_profile_cis xccdf_org.ssgproject.content_profile_standard; do
-          if docker exec openscap-env oscap info --profiles "ssg/${ssg}" | grep -qF "${p}:"; then
-            profile="${p}"
-            echo "::notice::Selected profile: ${profile}"
-            break
+      - name: Run OpenSCAP Docker Scan
+        run: |
+          set -e
+          IMAGE_NAME="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
+          
+          # Extract /etc/os-release to determine the appropriate SCAP profile
+          container_id=$(docker create "${IMAGE_NAME}")
+          if ! docker export "${container_id}" | tar -tvf - | grep -E '\setc/os-release( ->.*)?$' > /dev/null 2>&1 ; then
+            echo "::warning::The operating system used by ${IMAGE_NAME} could not be detected."
+            echo "::warning::This is likely a UBI-based image. Using RHEL 9 profile as default."
+            ssg="scap-security-guide-0.1.69/ssg-rhel9-ds.xml"
+            profile="xccdf_org.ssgproject.content_profile_standard"
+          else
+            docker cp -L "$container_id:/etc/os-release" .
+            docker rm "$container_id"
+            
+            version_id=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' os-release | sed 's/"//g')
+            id=$(awk -F= '$1=="ID" { print $2 ;}' os-release | sed 's/"//g')
+            
+            echo "::notice::Detected OS: ${id} ${version_id}"
+            
+            if [ "${id}" = "rhel" ] && echo "${version_id}" | grep -qE '^8(\..*)?$' ; then
+              ssg="scap-security-guide-0.1.69/ssg-rhel8-ds.xml"
+            elif [ "${id}" = "rhel" ] && echo "${version_id}" | grep -qE '^9(\..*)?$' ; then
+              ssg="scap-security-guide-0.1.69/ssg-rhel9-ds.xml"
+            elif [ "${id}" = "rhel" ] && echo "${version_id}" | grep -qE '^10(\..*)?$' ; then
+              ssg="scap-security-guide-0.1.69/ssg-rhel10-ds.xml"
+            else
+              echo "::warning::No specific configuration for ${id} ${version_id}, using RHEL 9 as default"
+              ssg="scap-security-guide-0.1.69/ssg-rhel9-ds.xml"
+            fi
+            
+            profile=""
+            for p in xccdf_org.ssgproject.content_profile_cis_level2_server xccdf_org.ssgproject.content_profile_cis xccdf_org.ssgproject.content_profile_standard; do
+              if docker exec openscap-env oscap info --profiles "ssg/${ssg}" | grep -qF "${p}:"; then
+                profile="${p}"
+                echo "::notice::Selected profile: ${profile}"
+                break
+              fi
+            done
+            
+            if [ -z "${profile}" ]; then
+              echo "::error::No suitable profile found for ${ssg}"
+              exit 1
+            fi
           fi
-        done
-        
-        if [ -z "${profile}" ]; then
-          echo "::error::No suitable profile found for ${ssg}"
-          exit 1
-        fi
-      fi
-      
-      # Run the OpenSCAP scan using oscap-docker
-      set +e
-      docker exec openscap-env oscap-docker image "${IMAGE_NAME}" xccdf eval \
-        --verbose ERROR \
-        --fetch-remote-resources \
-        --profile "${profile}" \
-        --results "openscap-report-${{ matrix.container.name }}.xml" \
-        --report "openscap-report-${{ matrix.container.name }}.html" \
-        "ssg/${ssg}"
-      OSCAP_EXIT_CODE=$?
-      set -e
-      
-      case "${OSCAP_EXIT_CODE}" in
-        0)
-          echo "::notice::All rules passed for ${{ matrix.container.name }}"
-          ;;
-        1)
-          echo "::error::An error occurred during evaluation for ${{ matrix.container.name }}"
-          exit 2
-          ;;
-        2)
-          echo "::warning::There is at least one rule with either fail or unknown result for ${{ matrix.container.name }}"
-          ;;
-        *)
-          echo "::error::OpenSCAP returned an unexpected exit status of $OSCAP_EXIT_CODE for ${{ matrix.container.name }}"
-          exit "$OSCAP_EXIT_CODE"
-          ;;
-      esac
+          
+          set +e
+          docker exec openscap-env oscap-docker image "${IMAGE_NAME}" xccdf eval \
+            --verbose ERROR \
+            --fetch-remote-resources \
+            --profile "${profile}" \
+            --results "openscap-report-${{ matrix.container.name }}.xml" \
+            --report "openscap-report-${{ matrix.container.name }}.html" \
+            "ssg/${ssg}"
+          OSCAP_EXIT_CODE=$?
+          set -e
+          
+          case "${OSCAP_EXIT_CODE}" in
+            0)
+              echo "::notice::All rules passed for ${{ matrix.container.name }}"
+              ;;
+            1)
+              echo "::error::An error occurred during evaluation for ${{ matrix.container.name }}"
+              exit 2
+              ;;
+            2)
+              echo "::warning::There is at least one rule with either fail or unknown result for ${{ matrix.container.name }}"
+              ;;
+            *)
+              echo "::error::OpenSCAP returned an unexpected exit status of $OSCAP_EXIT_CODE for ${{ matrix.container.name }}"
+              exit "$OSCAP_EXIT_CODE"
+              ;;
+          esac
 
-  - name: Convert OpenSCAP results to SARIF
-    run: |
-      # Convert XCCDF to HDF format
-      docker exec openscap-env saf convert xccdf_results2hdf \
-        -i "openscap-report-${{ matrix.container.name }}.xml" \
-        -o "openscap-report-${{ matrix.container.name }}.hdf"
-      
-      # Convert HDF to SARIF format
-      docker exec openscap-env bash -c "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 sarif-multitool convert -t Hdf -o openscap-report-${{ matrix.container.name }}.sarif openscap-report-${{ matrix.container.name }}.hdf.json"
-      
-      # Filter SARIF results for GitHub Security (remove non-actionable items)
-      docker exec openscap-env jq 'del(.runs[].results[] | select(.kind == "notApplicable" or .kind == "pass" or .kind == "informational" ))' "openscap-report-${{ matrix.container.name }}.sarif" > "filtered-${{ matrix.container.name }}.sarif"
-      
-      # Copy results back to host
-      docker cp "openscap-env:/workspace/openscap-report-${{ matrix.container.name }}.html" .
-      docker cp "openscap-env:/workspace/openscap-report-${{ matrix.container.name }}.xml" .
-      docker cp "openscap-env:/workspace/openscap-report-${{ matrix.container.name }}.hdf.json" .
-      docker cp "openscap-env:/workspace/filtered-${{ matrix.container.name }}.sarif" .
+      - name: Convert OpenSCAP results to SARIF
+        run: |
+          # Convert XCCDF to HDF format
+          docker exec openscap-env saf convert xccdf_results2hdf \
+            -i "openscap-report-${{ matrix.container.name }}.xml" \
+            -o "openscap-report-${{ matrix.container.name }}.hdf"
+          
+          # Convert HDF to SARIF format
+          docker exec openscap-env bash -c "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 sarif-multitool convert -t Hdf -o openscap-report-${{ matrix.container.name }}.sarif openscap-report-${{ matrix.container.name }}.hdf.json"
+          
+          # Filter SARIF results for GitHub Security (remove non-actionable items)
+          docker exec openscap-env jq 'del(.runs[].results[] | select(.kind == "notApplicable" or .kind == "pass" or .kind == "informational" ))' "openscap-report-${{ matrix.container.name }}.sarif" > "filtered-${{ matrix.container.name }}.sarif"
+          
+          # Copy results back to host
+          docker cp "openscap-env:/workspace/openscap-report-${{ matrix.container.name }}.html" .
+          docker cp "openscap-env:/workspace/openscap-report-${{ matrix.container.name }}.xml" .
+          docker cp "openscap-env:/workspace/openscap-report-${{ matrix.container.name }}.hdf.json" .
+          docker cp "openscap-env:/workspace/filtered-${{ matrix.container.name }}.sarif" .
 
-  - name: Upload OpenSCAP Results
-    uses: actions/upload-artifact@v4
-    with:
-      name: "OpenSCAP Scan Results - ${{ matrix.container.name }}"
-      path: |
-        openscap-report-${{ matrix.container.name }}.html
-        openscap-report-${{ matrix.container.name }}.xml
-        openscap-report-${{ matrix.container.name }}.hdf.json
-        filtered-${{ matrix.container.name }}.sarif
+      - name: Upload OpenSCAP Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: "OpenSCAP Scan Results - ${{ matrix.container.name }}"
+          path: |
+            openscap-report-${{ matrix.container.name }}.html
+            openscap-report-${{ matrix.container.name }}.xml
+            openscap-report-${{ matrix.container.name }}.hdf.json
+            filtered-${{ matrix.container.name }}.sarif
 
-  - name: Upload OpenSCAP SARIF to GitHub Security
-    uses: github/codeql-action/upload-sarif@v3
-    if: always()
-    with:
-      sarif_file: "filtered-${{ matrix.container.name }}.sarif"
-      category: "openscap-${{ matrix.container.name }}"
+      - name: Upload OpenSCAP SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "filtered-${{ matrix.container.name }}.sarif"
+          category: "openscap-${{ matrix.container.name }}"
 
-  - name: Cleanup OpenSCAP environment
-    if: always()
-    run: |
-      docker stop openscap-env || true
-      docker rm openscap-env || true
+      - name: Cleanup OpenSCAP environment
+        if: always()
+        run: |
+          docker stop openscap-env || true
+          docker rm openscap-env || true
 
-  - name: Run Inspec Scan
-    run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-inspec"
+      - name: Run Inspec Scan
+        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-inspec"
 
-  - name: Extract Inspec Results
-    uses: shrink/actions-docker-extract@v3
-    with:
-      image: "localbuild/${{ matrix.container.name }}-inspec"
-      path: /tmp/junit.xml
-      destination: ubi-inspec-output
+      - name: Extract Inspec Results
+        uses: shrink/actions-docker-extract@v3
+        with:
+          image: "localbuild/${{ matrix.container.name }}-inspec"
+          path: /tmp/junit.xml
+          destination: ubi-inspec-output
 
-  - name: Publish Inspec Test Results
-    uses: EnricoMi/publish-unit-test-result-action/linux@v2
-    with:
-      files: |
-        ubi-inspec-output/junit.xml
+      - name: Publish Inspec Test Results
+        uses: EnricoMi/publish-unit-test-result-action/linux@v2
+        with:
+          files: |
+            ubi-inspec-output/junit.xml
 
-  - name: Upload Inspec Scan Results
-    uses: actions/upload-artifact@v4
-    with:
-      name: "Inspec Scan Results - ${{ matrix.container.name }}"
-      path: ubi-inspec-output
+      - name: Upload Inspec Scan Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: "Inspec Scan Results - ${{ matrix.container.name }}"
+          path: ubi-inspec-output
 
-  - name: Tag and Push Docker image
-    if: github.event_name == 'push'
-    run: |
-      docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-      docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-      docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
-      echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-      docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-      docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-      docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
+      - name: Tag and Push Docker image
+        if: github.event_name == 'push'
+        run: |
+          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
+          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
+          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
 
-  - name: Docker logout
-    if: github.event_name == 'push'
-    run: docker logout
-```
+      - name: Docker logout
+        if: github.event_name == 'push'
+        run: docker logout
