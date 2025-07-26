@@ -62,8 +62,9 @@ source ansibletemp/bin/activate \
     && RELEASE_TAG="v0.1.77" \
     && ASSET_URL="https://github.com/ComplianceAsCode/content/releases/download/$RELEASE_TAG/scap-security-guide-0.1.77.zip" \
     && curl -L -o content.zip "$ASSET_URL" \
-    && unzip -q content.zip -d content \
-    && rm content.zip \
+    && unzip -q content.zip -d temp_content \
+    && mv temp_content/scap-security-guide-*/ content \
+    && rm -rf temp_content content.zip \
     && echo "=== Full directory listing under 'content/' ===" \
     && ls -R content \
     && ansible-playbook -i "localhost," -c local "content/$PLAYBOOK_PATH" --skip-tags="$SKIP_TAGS"
