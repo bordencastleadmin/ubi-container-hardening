@@ -17,23 +17,23 @@ fi
 
 # Install packages based on OS version
 dnf update -y
-dnf install -y mailx postfix unzip git curl
+dnf install -y postfix unzip git curl
 
 case $OS_VERSION in
     8)
-        dnf install -y python3.11-pip
+        dnf install -y mailx python3.11-pip
         PYTHON_CMD="python3.11"
         PLAYBOOK_PATH="ansible/rhel8-playbook-stig.yml"
         SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-08-040110"
         ;;
     9)
-        dnf install -y python3-pip
+        dnf install -y s-nail python3-pip
         PYTHON_CMD="python3"
         PLAYBOOK_PATH="ansible/rhel9-playbook-stig.yml"
         SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-09-040110"
         ;;
     10)
-        dnf install -y python3-pip
+        dnf install -y s-nail python3-pip
         PYTHON_CMD="python3"
         PLAYBOOK_PATH="ansible/rhel10-playbook-stig.yml"
         SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-10-040110"
