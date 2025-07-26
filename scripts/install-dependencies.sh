@@ -48,10 +48,6 @@ case $OS_VERSION in
         ;;
 esac
 
-# Install pip and ansible
-pip3 install --upgrade pip
-pip3 install ansible ansible-core
-
 # Create virtual environment and run hardening
 $PYTHON_CMD -m venv ansibletemp
 source ansibletemp/bin/activate \
