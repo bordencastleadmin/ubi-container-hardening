@@ -16,7 +16,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-      security-events: write # for uploading SARIF results
+      security-events: write
       actions: read
     strategy:
       matrix:
@@ -107,25 +107,20 @@ jobs:
 #          name: "SCAP Scan Results - ${{ matrix.container.name }}"
 #          path: ubi-scap-output
 
-      # ===== REPLACED OpenSCAP Section with Direct oscap-docker Integration =====
-      - name: Setup OpenSCAP scanning environment
+      - name: Setup OpenSCAP scanning tools
         run: |
-          # Install OpenSCAP tools in a container
-          docker run -d --name openscap-env \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v $(pwd):/workspace \
-            --workdir /workspace \
-            alpine:3.18.3
+          # Install OpenSCAP and tools directly on Ubuntu runner
+          sudo apt-get update
+          sudo apt-get install -y libopenscap8 openscap-utils openscap-scanner curl unzip
           
-          # Install prerequisites in the Alpine container
-          docker exec openscap-env apk add curl docker openscap-docker npm gcompat unzip jq
-          docker exec openscap-env npm install -g "@microsoft/sarif-multitool@4.3.5"
-          docker exec openscap-env npm install -g "@mitre/saf@1.2.33"
+          # Install Node.js tools for format conversion
+          sudo npm install -g "@microsoft/sarif-multitool@4.3.5"
+          sudo npm install -g "@mitre/saf@1.2.33"
           
           # Download SCAP Security Guide
-          docker exec openscap-env mkdir -p ssg
-          docker exec openscap-env curl "https://github.com/ComplianceAsCode/content/releases/download/v0.1.69/scap-security-guide-0.1.69.zip" -Lso "ssg/ssg.zip"
-          docker exec openscap-env unzip "ssg/ssg.zip" -d "ssg"
+          mkdir -p ssg
+          curl "https://github.com/ComplianceAsCode/content/releases/download/v0.1.69/scap-security-guide-0.1.69.zip" -Lso "ssg/ssg.zip"
+          unzip "ssg/ssg.zip" -d "ssg"
 
       - name: Run OpenSCAP Docker Scan
         run: |
@@ -159,9 +154,10 @@ jobs:
               ssg="scap-security-guide-0.1.69/ssg-rhel9-ds.xml"
             fi
             
+            # Select the best available profile
             profile=""
             for p in xccdf_org.ssgproject.content_profile_cis_level2_server xccdf_org.ssgproject.content_profile_cis xccdf_org.ssgproject.content_profile_standard; do
-              if docker exec openscap-env oscap info --profiles "ssg/${ssg}" | grep -qF "${p}:"; then
+              if oscap info --profiles "ssg/${ssg}" | grep -qF "${p}:"; then
                 profile="${p}"
                 echo "::notice::Selected profile: ${profile}"
                 break
@@ -174,8 +170,9 @@ jobs:
             fi
           fi
           
+          # Run the OpenSCAP scan directly against the Docker image
           set +e
-          docker exec openscap-env oscap-docker image "${IMAGE_NAME}" xccdf eval \
+          oscap-docker image "${IMAGE_NAME}" xccdf eval \
             --verbose ERROR \
             --fetch-remote-resources \
             --profile "${profile}" \
@@ -205,21 +202,18 @@ jobs:
       - name: Convert OpenSCAP results to SARIF
         run: |
           # Convert XCCDF to HDF format
-          docker exec openscap-env saf convert xccdf_results2hdf \
+          saf convert xccdf_results2hdf \
             -i "openscap-report-${{ matrix.container.name }}.xml" \
             -o "openscap-report-${{ matrix.container.name }}.hdf"
           
           # Convert HDF to SARIF format
-          docker exec openscap-env bash -c "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 sarif-multitool convert -t Hdf -o openscap-report-${{ matrix.container.name }}.sarif openscap-report-${{ matrix.container.name }}.hdf.json"
+          DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 sarif-multitool convert -t Hdf \
+            -o "openscap-report-${{ matrix.container.name }}.sarif" \
+            "openscap-report-${{ matrix.container.name }}.hdf.json"
           
           # Filter SARIF results for GitHub Security (remove non-actionable items)
-          docker exec openscap-env jq 'del(.runs[].results[] | select(.kind == "notApplicable" or .kind == "pass" or .kind == "informational" ))' "openscap-report-${{ matrix.container.name }}.sarif" > "filtered-${{ matrix.container.name }}.sarif"
-          
-          # Copy results back to host
-          docker cp "openscap-env:/workspace/openscap-report-${{ matrix.container.name }}.html" .
-          docker cp "openscap-env:/workspace/openscap-report-${{ matrix.container.name }}.xml" .
-          docker cp "openscap-env:/workspace/openscap-report-${{ matrix.container.name }}.hdf.json" .
-          docker cp "openscap-env:/workspace/filtered-${{ matrix.container.name }}.sarif" .
+          jq 'del(.runs[].results[] | select(.kind == "notApplicable" or .kind == "pass" or .kind == "informational" ))' \
+            "openscap-report-${{ matrix.container.name }}.sarif" > "filtered-${{ matrix.container.name }}.sarif"
 
       - name: Upload OpenSCAP Results
         uses: actions/upload-artifact@v4
@@ -237,12 +231,6 @@ jobs:
         with:
           sarif_file: "filtered-${{ matrix.container.name }}.sarif"
           category: "openscap-${{ matrix.container.name }}"
-
-      - name: Cleanup OpenSCAP environment
-        if: always()
-        run: |
-          docker stop openscap-env || true
-          docker rm openscap-env || true
 
       - name: Run Inspec Scan
         run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-inspec"
