@@ -1,21 +1,74 @@
 #!/bin/bash
+
+# Simple Multi-OS Compliance Hardening Script
+# Uses ComplianceAsCode/content repository
+# Supports RHEL/UBI 8, 9, and 10
+
+set -e
+
+# Detect OS version
+if [ -f /etc/redhat-release ]; then
+    OS_VERSION=$(grep -oE '[0-9]+' /etc/redhat-release | head -n1)
+    echo "Detected RHEL/UBI version: $OS_VERSION"
+else
+    echo "Error: Could not detect Red Hat based OS"
+    exit 1
+fi
+
+# Install packages based on OS version
 dnf update -y
-dnf install mailx postfix unzip python3.11-pip git -y 
-pip3 install --upgrade pip 
-pip3 install ansible ansible-core
+dnf install -y postfix unzip git curl python3-dnf dnf
 
-cat <<EOF >> harden-ubi8.yml
----
-- hosts: all
-  roles:
-     - ansible-role-rhel8-stig
-EOF
+case $OS_VERSION in
+    8)
+        dnf install -y mailx python3.11-pip
+        PYTHON_CMD="python3.11"
+        PLAYBOOK_PATH="ansible/rhel8-playbook-stig.yml"
+        ANSIBLE_VERSION="ansible==7.4.0"
+        SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-08-040110"
+        ;;
+    9)
+        dnf install -y s-nail python3-pip
+        PYTHON_CMD="python3"
+        PLAYBOOK_PATH="ansible/rhel9-playbook-stig.yml"
+        ANSIBLE_VERSION="ansible==8.6.0"
+        SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-09-040110"
+        ;;
+    10)
+        dnf install -y s-nail python3-pip
+        PYTHON_CMD="python3"
+        PLAYBOOK_PATH="ansible/rhel10-playbook-stig.yml"
+        ANSIBLE_VERSION="ansible==8.6.0"
+        SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-10-040110"
+        ;;
+    *)
+        echo "Error: Unsupported OS version: $OS_VERSION"
+        echo "Supported versions: RHEL/UBI 8, 9, 10"
+        exit 1
+        ;;
+esac
 
-python3.11 -m venv ansibletemp
+# Create virtual environment and run hardening
+$PYTHON_CMD -m venv ansibletemp
 source ansibletemp/bin/activate \
     && python3 -m pip install --upgrade pip \
-    && python3 -m pip install ansible ansible-core \
-    && git clone https://github.com/RedHatOfficial/ansible-role-rhel8-stig.git \
-    && ansible-playbook -i "localhost," -c local harden-ubi8.yml --skip-tags="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-08-040110"
+    && python3 -m pip install ${ANSIBLE_VERSION} \
+    && echo "Fetching latest release info..." \
+    && RELEASE_INFO=$(curl -s https://api.github.com/repos/ComplianceAsCode/content/releases/latest) \
+    && RELEASE_TAG=$(echo "$RELEASE_INFO" | grep '"tag_name":' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') \
+    && RELEASE_URL=$(echo "$RELEASE_INFO" | grep '"zipball_url":' | sed -E 's/.*"zipball_url": "([^"]+)".*/\1/') \
+    && echo "Fetching SCAP Security Guide release v0.1.77..." \
+    && RELEASE_TAG="v0.1.77" \
+    && ASSET_URL="https://github.com/ComplianceAsCode/content/releases/download/$RELEASE_TAG/scap-security-guide-0.1.77.zip" \
+    && curl -L -o content.zip "$ASSET_URL" \
+    && unzip -q content.zip -d temp_content \
+    && mv temp_content/scap-security-guide-*/ content \
+    && rm -rf temp_content content.zip \
+    && echo "=== Full directory listing under 'content/' ===" \
+    && ls -R content \
+    && ansible-playbook -i "localhost," -c local "content/$PLAYBOOK_PATH" --skip-tags="$SKIP_TAGS"
 
+# Set FIPS crypto policy
 update-crypto-policies --set FIPS
+
+echo "Hardening completed successfully for RHEL/UBI $OS_VERSION"

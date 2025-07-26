@@ -17,21 +17,38 @@ jobs:
       matrix:
         container:
           - {name: "ubi8", repo_name: "registry.redhat.io/ubi8", dockerfile: "Dockerfile.ubi8", goss_file: "goss-ubi8.yaml"}
-          - {name: "ubi-python-39", repo_name: "registry.redhat.io/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-python-39.yaml"}
-          - {name: "ubi-python-311", repo_name: "registry.redhat.io/ubi8/python-311", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-python-311.yaml"}
-          - {name: "ubi-openjdk-17", repo_name: "registry.redhat.io/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-openjdk-17.yaml"}
-          - {name: "ubi-openjdk-21", repo_name: "registry.redhat.io/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-openjdk-21.yaml"}
+          #- {name: "ubi9", repo_name: "registry.redhat.io/ubi9", dockerfile: "Dockerfile.ubi9", goss_file: "goss-ubi9.yaml"}
+          #- {name: "ubi10", repo_name: "registry.redhat.io/ubi10", dockerfile: "Dockerfile.ubi10", goss_file: "goss-ubi10.yaml"}
+          # UBI 8 Python variants
+          - {name: "ubi8-python-39", repo_name: "registry.redhat.io/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-ubi8-python-39.yaml"}
+          - {name: "ubi8-python-311", repo_name: "registry.redhat.io/ubi8/python-311", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-ubi8-python-311.yaml"}
+          # UBI 9 Python variants
+          #- {name: "ubi9-python-39", repo_name: "registry.redhat.io/ubi9/python-39", dockerfile: "Dockerfile.ubi9-python", goss_file: "goss-ubi9-python-39.yaml"}
+          #- {name: "ubi9-python-311", repo_name: "registry.redhat.io/ubi9/python-311", dockerfile: "Dockerfile.ubi9-python", goss_file: "goss-ubi9-python-311.yaml"}
+          # UBI 10 Python variants  
+          #- {name: "ubi10-python-39", repo_name: "registry.redhat.io/ubi10/python-39", dockerfile: "Dockerfile.ubi10-python", goss_file: "goss-ubi10-python-39.yaml"}
+          #- {name: "ubi10-python-311", repo_name: "registry.redhat.io/ubi10/python-311", dockerfile: "Dockerfile.ubi10-python", goss_file: "goss-ubi10-python-311.yaml"}
+          # UBI 8 OpenJDK variants
+          - {name: "ubi8-openjdk-17", repo_name: "registry.redhat.io/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-ubi8-openjdk-17.yaml"}
+          - {name: "ubi8-openjdk-21", repo_name: "registry.redhat.io/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-ubi8-openjdk-21.yaml"}
+          # UBI 9 OpenJDK variants
+          #- {name: "ubi9-openjdk-17", repo_name: "registry.redhat.io/ubi9/openjdk-17", dockerfile: "Dockerfile.ubi9-openjdk", goss_file: "goss-ubi9-openjdk-17.yaml"}
+          #- {name: "ubi9-openjdk-21", repo_name: "registry.redhat.io/ubi9/openjdk-21", dockerfile: "Dockerfile.ubi9-openjdk", goss_file: "goss-ubi9-openjdk-21.yaml"}
+          # UBI 10 OpenJDK variants
+          #- {name: "ubi10-openjdk-17", repo_name: "registry.redhat.io/ubi10/openjdk-17", dockerfile: "Dockerfile.ubi10-openjdk", goss_file: "goss-ubi10-openjdk-17.yaml"}
+          #- {name: "ubi10-openjdk-21", repo_name: "registry.redhat.io/ubi10/openjdk-21", dockerfile: "Dockerfile.ubi10-openjdk", goss_file: "goss-ubi10-openjdk-21.yaml"}
     
     steps:
       - uses: actions/checkout@v4
 
+      # Login to Red Hat registries for authenticated access
       - name: Log in to Red Hat Container Registry
         uses: docker/login-action@v3
         with:
           registry: registry.redhat.io
           username: ${{ secrets.REDHAT_USERNAME }}
           password: ${{ secrets.REDHAT_PASSWORD }}
-        
+
       - name: Pull base image from Red Hat
         run: |
           docker pull ${{ matrix.container.repo_name }}
