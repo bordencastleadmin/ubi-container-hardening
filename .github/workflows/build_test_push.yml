@@ -132,18 +132,17 @@ jobs:
           set -e
           IMAGE_NAME="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
           
-          # Start the target container that we want to scan
-          TARGET_CONTAINER=$(docker run -d "${IMAGE_NAME}" tail -f /dev/null)
-          echo "Started target container ${TARGET_CONTAINER} for scanning"
-          
           # Extract /etc/os-release to determine the appropriate SCAP profile
-          if ! docker exec "${TARGET_CONTAINER}" test -f /etc/os-release ; then
+          container_id=$(docker create "${IMAGE_NAME}")
+          if ! docker export "${container_id}" | tar -tvf - | grep -E '\setc/os-release( ->.*)?$' > /dev/null 2>&1 ; then
             echo "::warning::The operating system used by ${IMAGE_NAME} could not be detected."
             echo "::warning::This is likely a UBI-based image. Using RHEL 9 profile as default."
             ssg="scap-security-guide-0.1.69/ssg-rhel9-ds.xml"
             profile="xccdf_org.ssgproject.content_profile_standard"
+            docker rm "$container_id"
           else
-            docker exec "${TARGET_CONTAINER}" cat /etc/os-release > os-release
+            docker cp -L "$container_id:/etc/os-release" .
+            docker rm "$container_id"
             
             version_id=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' os-release | sed 's/"//g')
             id=$(awk -F= '$1=="ID" { print $2 ;}' os-release | sed 's/"//g')
@@ -173,15 +172,13 @@ jobs:
             
             if [ -z "${profile}" ]; then
               echo "::error::No suitable profile found for ${ssg}"
-              docker stop "${TARGET_CONTAINER}" || true
-              docker rm "${TARGET_CONTAINER}" || true
               exit 1
             fi
           fi
           
-          # Run the OpenSCAP scan from the scanner container against the running target container
+          # Run the OpenSCAP scan against the Docker IMAGE (not container)
           set +e
-          docker exec openscap-scanner oscap-docker container "${TARGET_CONTAINER}" xccdf eval \
+          docker exec openscap-scanner oscap-docker image "${IMAGE_NAME}" xccdf eval \
             --verbose ERROR \
             --fetch-remote-resources \
             --profile "${profile}" \
@@ -190,10 +187,6 @@ jobs:
             "ssg/${ssg}"
           OSCAP_EXIT_CODE=$?
           set -e
-          
-          # Stop and remove the target container
-          docker stop "${TARGET_CONTAINER}" || true
-          docker rm "${TARGET_CONTAINER}" || true
           
           case "${OSCAP_EXIT_CODE}" in
             0)
