@@ -64,6 +64,10 @@ source ansibletemp/bin/activate \
     && mv temp_content/* content \
     && rm -rf temp_content \
     && rm content.zip \
+    && echo "=== Directory structure of 'content/' ===" \
+    && ls -l content \
+    && echo "=== Full directory listing under 'content/' ===" \
+    && ls -R content \
     && ansible-playbook -i "localhost," -c local "content/$PLAYBOOK_PATH" --skip-tags="$SKIP_TAGS"
 
 # Set FIPS crypto policy
