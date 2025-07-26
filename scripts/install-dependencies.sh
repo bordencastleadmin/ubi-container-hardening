@@ -17,7 +17,7 @@ fi
 
 # Install packages based on OS version
 dnf update -y
-dnf install -y postfix unzip git curl
+dnf install -y postfix unzip git curl python3-dnf dnf
 
 case $OS_VERSION in
     8)
