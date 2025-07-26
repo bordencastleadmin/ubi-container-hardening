@@ -24,18 +24,21 @@ case $OS_VERSION in
         dnf install -y mailx python3.11-pip
         PYTHON_CMD="python3.11"
         PLAYBOOK_PATH="ansible/rhel8-playbook-stig.yml"
+        ANSIBLE_VERSION="ansible-core==2.14"
         SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-08-040110"
         ;;
     9)
         dnf install -y s-nail python3-pip
         PYTHON_CMD="python3"
         PLAYBOOK_PATH="ansible/rhel9-playbook-stig.yml"
+        ANSIBLE_VERSION="ansible-core=2.15"
         SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-09-040110"
         ;;
     10)
         dnf install -y s-nail python3-pip
         PYTHON_CMD="python3"
         PLAYBOOK_PATH="ansible/rhel10-playbook-stig.yml"
+        ANSIBLE_VERSION="ansible-core=2.15"
         SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-10-040110"
         ;;
     *)
@@ -53,7 +56,7 @@ pip3 install ansible ansible-core
 $PYTHON_CMD -m venv ansibletemp
 source ansibletemp/bin/activate \
     && python3 -m pip install --upgrade pip \
-    && python3 -m pip install ansible ansible-core \
+    && python3 -m pip install ${ANSIBLE_VERSION} \
     && echo "Fetching latest release info..." \
     && RELEASE_INFO=$(curl -s https://api.github.com/repos/ComplianceAsCode/content/releases/latest) \
     && RELEASE_TAG=$(echo "$RELEASE_INFO" | grep '"tag_name":' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') \
