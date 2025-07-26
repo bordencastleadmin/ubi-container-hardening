@@ -1,4 +1,4 @@
-#Function to create appropriate playbook
+# Function to create appropriate playbook
 create_playbook() {
     local playbook_file="harden-ubi${OS_VERSION}.yml"
     local role_name=""
@@ -214,7 +214,8 @@ run_hardening() {
     fi
     
     # Run the playbook
-    echo "Running hardening playbook: $playbook_path (release: ${RELEASE_TAG:-main})"
+    echo "Running hardening playbook: $playbook_path"
+    echo "Release version: ${RELEASE_TAG:-main}"
     ansible-playbook -i "localhost," -c local "$playbook_path" --skip-tags="$SKIP_TAGS"
     
     # Deactivate virtual environment
