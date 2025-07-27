@@ -1,16 +1,18 @@
 ARG BASE_IMAGE
-
+ARG COMPLIANCE_AS_CODE_VERSION
 FROM ${BASE_IMAGE}
 
 #Install Dependencies to Run STIGs
 ENV BUILDER=/tmp/builder
+ARG COMPLIANCE_AS_CODE_VERSION
+ENV COMPLIANCE_AS_CODE_VERSION=${COMPLIANCE_AS_CODE_VERSION}
 
 #Install Dependencies
 USER root
 RUN mkdir ${BUILDER}
 WORKDIR ${BUILDER}
-COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh
-RUN ${BUILDER}/install-dependencies.sh
+COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh 
+RUN ${BUILDER}/install-dependencies.sh --version ${COMPLIANCE_AS_CODE_VERSION}
 
 COPY --chmod=0755 scripts/cleanup-dnf.sh ${BUILDER}/cleanup-dnf.sh
 RUN ${BUILDER}/cleanup-dnf.sh

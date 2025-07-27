@@ -1,11 +1,32 @@
 ARG CONTAINER
-
 FROM ${CONTAINER}
+
+ARG COMPLIANCE_AS_CODE_VERSION
+ENV COMPLIANCE_AS_CODE_VERSION=${COMPLIANCE_AS_CODE_VERSION}
 
 USER root
 WORKDIR /tmp
 
+# Install required tools
 RUN dnf install openscap-scanner unzip -y
-ADD --chmod=0755 https://github.com/ComplianceAsCode/content/releases/download/v0.1.72/scap-security-guide-0.1.72.zip /tmp/scap-security-guide-0.1.72.zip
-RUN unzip /tmp/scap-security-guide-0.1.72.zip
-RUN oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_stig --results /tmp/oscap-report.xml --report /tmp/openscap.html --oval-results /tmp/scap-security-guide-0.1.72/ssg-rhel8-ds.xml 2>&1 || true
+
+# Add the SCAP Security Guide archive
+ADD --chmod=0755 https://github.com/ComplianceAsCode/content/releases/download/v${COMPLIANCE_AS_CODE_VERSION}/scap-security-guide-{COMPLIANCE_AS_CODE_VERSION}.zip /tmp/scap-security-guide-{COMPLIANCE_AS_CODE_VERSION}.zip
+
+# Unzip the SCAP Security Guide
+RUN unzip /tmp/scap-security-guide-{COMPLIANCE_AS_CODE_VERSION}.zip
+
+# Detect OS version and select the appropriate SCAP file
+RUN source /etc/os-release && \
+    case "$VERSION_ID" in \
+      8*) SCAP_FILE="/tmp/scap-security-guide-{COMPLIANCE_AS_CODE_VERSION}/ssg-rhel8-ds.xml" ;; \
+      9*) SCAP_FILE="/tmp/scap-security-guide-{COMPLIANCE_AS_CODE_VERSION}/ssg-rhel9-ds.xml" ;; \
+      10*) SCAP_FILE="/tmp/scap-security-guide-{COMPLIANCE_AS_CODE_VERSION}/ssg-rhel10-ds.xml" ;; \
+      *) echo "Unsupported OS version: $VERSION_ID" && exit 1 ;; \
+    esac && \
+    echo "Using SCAP file: $SCAP_FILE" && \
+    oscap xccdf eval \
+      --profile xccdf_org.ssgproject.content_profile_stig \
+      --results /tmp/oscap-report.xml \
+      --report /tmp/openscap.html \
+      --oval-results "$SCAP_FILE" 2>&1 || true

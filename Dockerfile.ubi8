@@ -1,13 +1,15 @@
 ARG BASE_IMAGE
-
 FROM ${BASE_IMAGE}
+
+ARG COMPLIANCE_AS_CODE_VERSION
+ENV COMPLIANCE_AS_CODE_VERSION=${COMPLIANCE_AS_CODE_VERSION}
 
 ENV BUILDER=/tmp/builder
 
 RUN mkdir ${BUILDER}
 WORKDIR ${BUILDER}
-COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh
-RUN ${BUILDER}/install-dependencies.sh
+COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh 
+RUN ${BUILDER}/install-dependencies.sh --version ${COMPLIANCE_AS_CODE_VERSION}
 
 COPY --chmod=0755 scripts/cleanup-dnf.sh ${BUILDER}/cleanup-dnf.sh
 RUN ${BUILDER}/cleanup-dnf.sh
