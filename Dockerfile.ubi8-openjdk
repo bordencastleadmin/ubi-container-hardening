@@ -4,6 +4,7 @@ FROM ${BASE_IMAGE}
 
 #Install Dependencies to Run STIGs
 ENV BUILDER=/tmp/builder
+ENV COMPLIANCE_AS_CODE_VERSIO${COMPLIANCE_AS_CODE_VERSION}
 
 #Install Dependencies
 USER root
