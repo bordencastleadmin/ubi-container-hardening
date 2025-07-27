@@ -75,25 +75,70 @@ jobs:
         with:
           sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
 
-      - name: OpenSCAP Scan
-        run: docker build . \
-          --file Dockerfile.Openscap \
-          --build-arg CONTAINER="localbuild/${{ matrix.name }}:${{ env.VERSION }}" \
-          --build-arg COMPLIANCE_AS_CODE_VERSION="${{ env.COMPLIANCE_AS_CODE_VERSION }}" \
-          --tag "localbuild/${{ matrix.name }}-scap"
+      - name: Run OpenSCAP Scan with Script
+        run: |
+          chmod +x ./scripts/openscap-scan.sh
+          ./scripts/openscap-scan.sh \
+            --container "localbuild/${{ matrix.name }}:${{ env.VERSION }}" \
+            --compliance-version "${{ env.COMPLIANCE_AS_CODE_VERSION }}" \
+            --output-dir "ubi-openscap-output"
 
-      - uses: shrink/actions-docker-extract@v3
-        id: "ubi-extract-openscap"
+      - name: Publish OpenSCAP Test Results
+        uses: EnricoMi/publish-unit-test-result-action/linux@v2
+        if: always()
         with:
-          image: "localbuild/${{ matrix.name }}-scap"
-          path: /tmp/openscap.html
-          destination: ubi-openscap-output
+          files: |
+            ubi-openscap-output/oscap-report.xml
+          check_name: "OpenSCAP Results - ${{ matrix.name }}"
+          comment_title: "OpenSCAP Security Scan Results - ${{ matrix.name }}"
+          fail_on: "nothing"
 
-      - name: Upload OpenSCAP Results
+      - name: Upload OpenSCAP Scan Results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: "OpenSCAP Scan Results - ${{ matrix.name }}"
           path: ubi-openscap-output
+
+      - name: Comment OpenSCAP Results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            try {
+              // Check if HTML report exists
+              const htmlPath = path.join('ubi-openscap-output', 'openscap.html');
+              if (fs.existsSync(htmlPath)) {
+                const htmlSize = fs.statSync(htmlPath).size;
+                const comment = `## 🔒 OpenSCAP Security Scan Results - ${{ matrix.name }}
+                
+                The OpenSCAP security scan has completed for \`${{ matrix.name }}\`.
+                
+                📊 **Scan Details:**
+                - Container: \`localbuild/${{ matrix.name }}:${{ env.VERSION }}\`
+                - Compliance Version: \`${{ env.COMPLIANCE_AS_CODE_VERSION }}\`
+                - Report Size: ${(htmlSize / 1024).toFixed(2)} KB
+                
+                📁 **Artifacts Generated:**
+                - HTML Report: \`openscap.html\` (downloadable from workflow artifacts)
+                - XML Report: \`oscap-report.xml\` (if available)
+                
+                ⬇️ Download the complete scan results from the workflow artifacts to view detailed findings.
+                `;
+                
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              }
+            } catch (error) {
+              console.log('Could not post OpenSCAP results comment:', error.message);
+            }
 
 #      - name: Run Inspec Scan
 #        run: docker build . \

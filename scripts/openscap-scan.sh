@@ -71,11 +71,12 @@ echo ""
 # Create a temporary container name
 TEMP_CONTAINER="openscap-scan-$(date +%s)"
 
-# Run the OpenSCAP scan
+# Run the OpenSCAP scan with volume mount
 echo "Creating and running scan container..."
 docker run --name "$TEMP_CONTAINER" \
     --user root \
     --workdir /tmp \
+    --volume "$(pwd)/$OUTPUT_DIR:/output" \
     "$CONTAINER" \
     bash -c "
         set -e
@@ -111,18 +112,13 @@ docker run --name "$TEMP_CONTAINER" \
         
         oscap xccdf eval \\
             --profile xccdf_org.ssgproject.content_profile_stig \\
-            --results /tmp/oscap-report.xml \\
-            --report /tmp/openscap.html \\
+            --results /output/oscap-report.xml \\
+            --report /output/openscap.html \\
             --oval-results \"\$SCAP_FILE\" 2>&1 || true
         
         echo 'Scan completed successfully'
+        echo 'Results saved to /output directory'
     "
-
-# Extract the results from the container
-echo ""
-echo "Extracting scan results..."
-docker cp "$TEMP_CONTAINER:/tmp/openscap.html" "$OUTPUT_DIR/openscap.html"
-docker cp "$TEMP_CONTAINER:/tmp/oscap-report.xml" "$OUTPUT_DIR/oscap-report.xml" 2>/dev/null || echo "Note: oscap-report.xml not found (this is normal)"
 
 # Clean up the temporary container
 echo "Cleaning up temporary container..."
@@ -132,6 +128,6 @@ echo ""
 echo "OpenSCAP scan completed successfully!"
 echo "Results saved to:"
 echo "  - HTML Report: $OUTPUT_DIR/openscap.html"
-echo "  - XML Report: $OUTPUT_DIR/oscap-report.xml"
+echo "  - XML Report: $OUTPUT_DIR/oscap-report.xml (if generated)"
 echo ""
 echo "You can view the HTML report by opening: $OUTPUT_DIR/openscap.html"
