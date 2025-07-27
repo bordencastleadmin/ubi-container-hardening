@@ -47,7 +47,12 @@ jobs:
         run: |
           VERSION=$(docker inspect --format '{{ index .RepoTags 0 }}' ${{ matrix.repo_name }} | awk -F ':' '{print $2}')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-
+      
+      - name: Debug Build Arguments
+        run: |
+          echo "BASE_IMAGE=${{ matrix.container.repo_name }}"
+          echo "COMPLIANCE_AS_CODE_VERSION=${{ env.COMPLIANCE_AS_CODE_VERSION }}"
+          
       - name: Build the Docker image
         run: |
           docker build . \
