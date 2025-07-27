@@ -7,7 +7,7 @@ ENV BUILDER=/tmp/builder
 RUN mkdir ${BUILDER}
 WORKDIR ${BUILDER}
 COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh 
-RUN ${BUILDER}/install-dependencies.sh ${COMPLIANCE_AS_CODE_VERSION}
+RUN ${BUILDER}/install-dependencies.sh --version ${COMPLIANCE_AS_CODE_VERSION}
 
 COPY --chmod=0755 scripts/cleanup-dnf.sh ${BUILDER}/cleanup-dnf.sh
 RUN ${BUILDER}/cleanup-dnf.sh
