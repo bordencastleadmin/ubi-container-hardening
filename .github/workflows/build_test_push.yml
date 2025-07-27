@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        container:
+        include:
           - {name: "ubi8", repo_name: "registry.redhat.io/ubi8", dockerfile: "Dockerfile.ubi8", goss_file: "goss-ubi8.yaml"}
           #- {name: "ubi9", repo_name: "registry.redhat.io/ubi9", dockerfile: "Dockerfile.ubi9", goss_file: "goss-ubi9.yaml"}
           #- {name: "ubi10", repo_name: "registry.redhat.io/ubi10", dockerfile: "Dockerfile.ubi10", goss_file: "goss-ubi10.yaml"}
@@ -40,27 +40,27 @@ jobs:
 
       - name: Pull base image from Red Hat
         run: |
-          docker pull ${{ matrix.container.repo_name }}
+          docker pull ${{ matrix.repo_name }}
 
       - name: Get base image version tag
         id: get-version
         run: |
-          VERSION=$(docker inspect --format '{{ index .RepoTags 0 }}' ${{ matrix.container.repo_name }} | awk -F ':' '{print $2}')
+          VERSION=$(docker inspect --format '{{ index .RepoTags 0 }}' ${{ matrix.repo_name }} | awk -F ':' '{print $2}')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Build the Docker image
         run: |
           docker build . \
-            --file ${{ matrix.container.dockerfile }} \
-            --build-arg BASE_IMAGE="${{ matrix.container.repo_name }}" \
+            --file ${{ matrix.dockerfile }} \
+            --build-arg BASE_IMAGE="${{ matrix.repo_name }}" \
             --build-arg COMPLIANCE_AS_CODE_VERSION="${{ env.COMPLIANCE_AS_CODE_VERSION }}" \
-            --tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
+            --tag "localbuild/${{ matrix.name }}:${{ env.VERSION }}"
 
       - name: Vulnerability scan image
         id: vulnerability-scan
         uses: anchore/scan-action@v3
         with:
-          image: "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
+          image: "localbuild/${{ matrix.name }}:${{ env.VERSION }}"
           only-fixed: true
           severity-cutoff: critical
           fail-build: false
@@ -73,34 +73,34 @@ jobs:
       - name: OpenSCAP Scan
         run: docker build . \
           --file Dockerfile.Openscap \
-          --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" \
+          --build-arg CONTAINER="localbuild/${{ matrix.name }}:${{ env.VERSION }}" \
           --build-arg COMPLIANCE_AS_CODE_VERSION="${{ env.COMPLIANCE_AS_CODE_VERSION }}" \
-          --tag "localbuild/${{ matrix.container.name }}-scap"
+          --tag "localbuild/${{ matrix.name }}-scap"
 
       - uses: shrink/actions-docker-extract@v3
         id: "ubi-extract-openscap"
         with:
-          image: "localbuild/${{ matrix.container.name }}-scap"
+          image: "localbuild/${{ matrix.name }}-scap"
           path: /tmp/openscap.html
           destination: ubi-openscap-output
 
       - name: Upload OpenSCAP Results
         uses: actions/upload-artifact@v4
         with:
-          name: "OpenSCAP Scan Results - ${{ matrix.container.name }}"
+          name: "OpenSCAP Scan Results - ${{ matrix.name }}"
           path: ubi-openscap-output
 
       - name: Run Inspec Scan
         run: docker build . \
           --file Dockerfile.inspec \
-          --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" \
+          --build-arg CONTAINER="localbuild/${{ matrix.name }}:${{ env.VERSION }}" \
           --build-arg COMPLIANCE_AS_CODE_VERSION="${{ env.COMPLIANCE_AS_CODE_VERSION }}" \
-          --tag "localbuild/${{ matrix.container.name }}-inspec"
+          --tag "localbuild/${{ matrix.name }}-inspec"
 
       - name: Extract Inspec Results
         uses: shrink/actions-docker-extract@v3
         with:
-          image: "localbuild/${{ matrix.container.name }}-inspec"
+          image: "localbuild/${{ matrix.name }}-inspec"
           path: /tmp/junit.xml
           destination: ubi-inspec-output
 
@@ -113,19 +113,19 @@ jobs:
       - name: Upload Inspec Scan Results
         uses: actions/upload-artifact@v4
         with:
-          name: "Inspec Scan Results - ${{ matrix.container.name }}"
+          name: "Inspec Scan Results - ${{ matrix.name }}"
           path: ubi-inspec-output
 
       - name: Tag and Push Docker image
         if: github.event_name == 'push'
         run: |
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
+          docker tag "localbuild/${{ matrix.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.name }}:latest"
+          docker tag "localbuild/${{ matrix.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.name }}:${{ env.VERSION }}"
+          docker tag "localbuild/${{ matrix.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.name }}:${{ github.sha }}"
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.name }}:latest"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.name }}:${{ env.VERSION }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.name }}:${{ github.sha }}"
 
       - name: Docker logout
         if: github.event_name == 'push'
