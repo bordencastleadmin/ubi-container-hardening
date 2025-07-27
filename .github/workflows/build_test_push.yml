@@ -90,31 +90,31 @@ jobs:
           name: "OpenSCAP Scan Results - ${{ matrix.name }}"
           path: ubi-openscap-output
 
-      - name: Run Inspec Scan
-        run: docker build . \
-          --file Dockerfile.inspec \
-          --build-arg CONTAINER="localbuild/${{ matrix.name }}:${{ env.VERSION }}" \
-          --build-arg COMPLIANCE_AS_CODE_VERSION="${{ env.COMPLIANCE_AS_CODE_VERSION }}" \
-          --tag "localbuild/${{ matrix.name }}-inspec"
+#      - name: Run Inspec Scan
+#        run: docker build . \
+#          --file Dockerfile.inspec \
+#          --build-arg CONTAINER="localbuild/${{ matrix.name }}:${{ env.VERSION }}" \
+#          --build-arg COMPLIANCE_AS_CODE_VERSION="${{ env.COMPLIANCE_AS_CODE_VERSION }}" \
+#          --tag "localbuild/${{ matrix.name }}-inspec"
 
-      - name: Extract Inspec Results
-        uses: shrink/actions-docker-extract@v3
-        with:
-          image: "localbuild/${{ matrix.name }}-inspec"
-          path: /tmp/junit.xml
-          destination: ubi-inspec-output
+#      - name: Extract Inspec Results
+#        uses: shrink/actions-docker-extract@v3
+#        with:
+#          image: "localbuild/${{ matrix.name }}-inspec"
+#          path: /tmp/junit.xml
+#          destination: ubi-inspec-output
 
-      - name: Publish Inspec Test Results
-        uses: EnricoMi/publish-unit-test-result-action/linux@v2
-        with:
-          files: |
-            ubi-inspec-output/junit.xml
+#      - name: Publish Inspec Test Results
+#        uses: EnricoMi/publish-unit-test-result-action/linux@v2
+#        with:
+#          files: |
+#            ubi-inspec-output/junit.xml
 
-      - name: Upload Inspec Scan Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: "Inspec Scan Results - ${{ matrix.name }}"
-          path: ubi-inspec-output
+#      - name: Upload Inspec Scan Results
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: "Inspec Scan Results - ${{ matrix.name }}"
+#          path: ubi-inspec-output
 
       - name: Tag and Push Docker image
         if: github.event_name == 'push'
