@@ -77,38 +77,22 @@ jobs:
 
       - name: Run OpenSCAP Scan with Script
         run: |
-          chmod +x ./scripts/openscap-scan.sh
-          ./scripts/openscap-scan.sh \
+          chmod +x ./openscap-scan.sh
+          ./openscap-scan.sh \
             --container "localbuild/${{ matrix.name }}:${{ env.VERSION }}" \
             --compliance-version "${{ env.COMPLIANCE_AS_CODE_VERSION }}" \
             --output-dir "ubi-openscap-output"
 
-      - name: Parse OpenSCAP Results Summary
+      - name: Publish OpenSCAP Test Results
+        uses: EnricoMi/publish-unit-test-result-action/linux@v2
         if: always()
-        run: |
-          if [ -f "ubi-openscap-output/oscap-report.xml" ]; then
-            echo "## OpenSCAP Scan Summary for ${{ matrix.name }}" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            
-            # Extract basic statistics from the XCCDF report
-            PASS_COUNT=$(grep -o 'result="pass"' ubi-openscap-output/oscap-report.xml | wc -l || echo "0")
-            FAIL_COUNT=$(grep -o 'result="fail"' ubi-openscap-output/oscap-report.xml | wc -l || echo "0")
-            ERROR_COUNT=$(grep -o 'result="error"' ubi-openscap-output/oscap-report.xml | wc -l || echo "0")
-            UNKNOWN_COUNT=$(grep -o 'result="unknown"' ubi-openscap-output/oscap-report.xml | wc -l || echo "0")
-            NOTAPPLICABLE_COUNT=$(grep -o 'result="notapplicable"' ubi-openscap-output/oscap-report.xml | wc -l || echo "0")
-            
-            echo "| Result | Count |" >> $GITHUB_STEP_SUMMARY
-            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-            echo "| ✅ Pass | $PASS_COUNT |" >> $GITHUB_STEP_SUMMARY
-            echo "| ❌ Fail | $FAIL_COUNT |" >> $GITHUB_STEP_SUMMARY
-            echo "| ⚠️ Error | $ERROR_COUNT |" >> $GITHUB_STEP_SUMMARY
-            echo "| ❓ Unknown | $UNKNOWN_COUNT |" >> $GITHUB_STEP_SUMMARY
-            echo "| ➖ Not Applicable | $NOTAPPLICABLE_COUNT |" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "📁 Full results available in the artifacts section." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ OpenSCAP report not found" >> $GITHUB_STEP_SUMMARY
-          fi
+        with:
+          files: |
+            ubi-openscap-output/junit-results.xml
+          check_name: "OpenSCAP Security Scan - ${{ matrix.name }}"
+          comment_title: "OpenSCAP Security Scan Results - ${{ matrix.name }}"
+          fail_on: "nothing"
+          job_summary: true
 
       - name: Upload OpenSCAP Scan Results
         uses: actions/upload-artifact@v4
