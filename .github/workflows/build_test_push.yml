@@ -20,28 +20,38 @@ jobs:
       actions: read
     strategy:
       matrix:
-        container:
-          - {name: "ubi8", repo_name: "registry.redhat.io/ubi8", dockerfile: "Dockerfile.ubi8", goss_file: "goss-ubi8.yaml"}
-          #- {name: "ubi9", repo_name: "registry.redhat.io/ubi9", dockerfile: "Dockerfile.ubi9", goss_file: "goss-ubi9.yaml"}
-          #- {name: "ubi10", repo_name: "registry.redhat.io/ubi10", dockerfile: "Dockerfile.ubi10", goss_file: "goss-ubi10.yaml"}
+        include:
+          - name: "ubi8"
+            repo_name: "registry.redhat.io/ubi8"
+            dockerfile: "Dockerfile.ubi8"
+            goss_file: "goss-ubi8.yaml"
           # UBI 8 Python variants
-          - {name: "ubi8-python-39", repo_name: "registry.redhat.io/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-ubi8-python-39.yaml"}
-          - {name: "ubi8-python-311", repo_name: "registry.redhat.io/ubi8/python-311", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-ubi8-python-311.yaml"}
-          # UBI 9 Python variants
-          #- {name: "ubi9-python-39", repo_name: "registry.redhat.io/ubi9/python-39", dockerfile: "Dockerfile.ubi9-python", goss_file: "goss-ubi9-python-39.yaml"}
-          #- {name: "ubi9-python-311", repo_name: "registry.redhat.io/ubi9/python-311", dockerfile: "Dockerfile.ubi9-python", goss_file: "goss-ubi9-python-311.yaml"}
-          # UBI 10 Python variants  
-          #- {name: "ubi10-python-39", repo_name: "registry.redhat.io/ubi10/python-39", dockerfile: "Dockerfile.ubi10-python", goss_file: "goss-ubi10-python-39.yaml"}
-          #- {name: "ubi10-python-311", repo_name: "registry.redhat.io/ubi10/python-311", dockerfile: "Dockerfile.ubi10-python", goss_file: "goss-ubi10-python-311.yaml"}
+          - name: "ubi8-python-39"
+            repo_name: "registry.redhat.io/ubi8/python-39"
+            dockerfile: "Dockerfile.ubi8-python"
+            goss_file: "goss-ubi8-python-39.yaml"
+          - name: "ubi8-python-311"
+            repo_name: "registry.redhat.io/ubi8/python-311"
+            dockerfile: "Dockerfile.ubi8-python"
+            goss_file: "goss-ubi8-python-311.yaml"
           # UBI 8 OpenJDK variants
-          - {name: "ubi8-openjdk-17", repo_name: "registry.redhat.io/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-ubi8-openjdk-17.yaml"}
-          - {name: "ubi8-openjdk-21", repo_name: "registry.redhat.io/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-ubi8-openjdk-21.yaml"}
-          # UBI 9 OpenJDK variants
-          #- {name: "ubi9-openjdk-17", repo_name: "registry.redhat.io/ubi9/openjdk-17", dockerfile: "Dockerfile.ubi9-openjdk", goss_file: "goss-ubi9-openjdk-17.yaml"}
-          #- {name: "ubi9-openjdk-21", repo_name: "registry.redhat.io/ubi9/openjdk-21", dockerfile: "Dockerfile.ubi9-openjdk", goss_file: "goss-ubi9-openjdk-21.yaml"}
-          # UBI 10 OpenJDK variants
-          #- {name: "ubi10-openjdk-17", repo_name: "registry.redhat.io/ubi10/openjdk-17", dockerfile: "Dockerfile.ubi10-openjdk", goss_file: "goss-ubi10-openjdk-17.yaml"}
-          #- {name: "ubi10-openjdk-21", repo_name: "registry.redhat.io/ubi10/openjdk-21", dockerfile: "Dockerfile.ubi10-openjdk", goss_file: "goss-ubi10-openjdk-21.yaml"}
+          - name: "ubi8-openjdk-17"
+            repo_name: "registry.redhat.io/ubi8/openjdk-17"
+            dockerfile: "Dockerfile.ubi8-openjdk"
+            goss_file: "goss-ubi8-openjdk-17.yaml"
+          - name: "ubi8-openjdk-21"
+            repo_name: "registry.redhat.io/ubi8/openjdk-21"
+            dockerfile: "Dockerfile.ubi8-openjdk"
+            goss_file: "goss-ubi8-openjdk-21.yaml"
+          # Uncomment these when ready to use:
+          #- name: "ubi9"
+          #  repo_name: "registry.redhat.io/ubi9"
+          #  dockerfile: "Dockerfile.ubi9"
+          #  goss_file: "goss-ubi9.yaml"
+          #- name: "ubi10"
+          #  repo_name: "registry.redhat.io/ubi10"
+          #  dockerfile: "Dockerfile.ubi10"
+          #  goss_file: "goss-ubi10.yaml"
     
     steps:
       - uses: actions/checkout@v4
@@ -56,26 +66,26 @@ jobs:
 
       - name: Pull base image from Red Hat
         run: |
-          docker pull ${{ matrix.container.repo_name }}
+          docker pull ${{ matrix.repo_name }}
 
       - name: Get base image version tag
         id: get-version
         run: |
-          VERSION=$(docker inspect --format '{{ index .RepoTags 0 }}' ${{ matrix.container.repo_name }} | awk -F ':' '{print $2}')
+          VERSION=$(docker inspect --format '{{ index .RepoTags 0 }}' ${{ matrix.repo_name }} | awk -F ':' '{print $2}')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Build the Docker image
         run: |
           docker build . \
-            --file ${{ matrix.container.dockerfile }} \
-            --build-arg BASE_IMAGE="${{ matrix.container.repo_name }}" \
-            --tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
+            --file ${{ matrix.dockerfile }} \
+            --build-arg BASE_IMAGE="${{ matrix.repo_name }}" \
+            --tag "localbuild/${{ matrix.name }}:${{ env.VERSION }}"
 
       - name: Vulnerability scan image
         id: vulnerability-scan
         uses: anchore/scan-action@v3
         with:
-          image: "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
+          image: "localbuild/${{ matrix.name }}:${{ env.VERSION }}"
           only-fixed: true
           severity-cutoff: critical
           fail-build: false
@@ -84,28 +94,6 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
-
-#      - name: Run Goss tests
-#        run: |
-#          docker run --rm -d --name goss_test_container "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
-#          docker run --rm --network container:goss_test_container -v $(pwd)/${{ matrix.container.goss_file }}:/goss/goss.yaml aelsabbahy/goss:latest goss validate
-#          docker stop goss_test_container
-
-#      - name: Run DoD SCAP Scan
-#        run: docker build . --file Dockerfile.DoDscap --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-dodscap"
-
-#      - name: Extract SCAP Results
-#        uses: shrink/actions-docker-extract@v3
-#        with:
-#          image: "localbuild/${{ matrix.container.name }}-dodscap"
-#          path: /root/SCC/Sessions
-#          destination: ubi-scap-output
-
-#      - name: Upload SCAP Results
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: "SCAP Scan Results - ${{ matrix.container.name }}"
-#          path: ubi-scap-output
 
       - name: Setup OpenSCAP scanning tools
         run: |
@@ -130,90 +118,11 @@ jobs:
       - name: Run OpenSCAP Docker Scan
         run: |
           set -e
-          IMAGE_NAME="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}"
+          IMAGE_NAME="localbuild/${{ matrix.name }}:${{ env.VERSION }}"
           
           # Extract /etc/os-release to determine the appropriate SCAP profile
           container_id=$(docker create "${IMAGE_NAME}")
-          if ! docker export "${container_id}" | tar -tvf - | grep -E '\setc/os-release( ->.*)?
-
-      - name: Convert OpenSCAP results to SARIF
-        run: |
-          # Convert XCCDF to HDF format
-          docker exec openscap-scanner saf convert xccdf_results2hdf \
-            -i "openscap-report-${{ matrix.container.name }}.xml" \
-            -o "openscap-report-${{ matrix.container.name }}.hdf"
-          
-          # Convert HDF to SARIF format
-          docker exec openscap-scanner bash -c "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 sarif-multitool convert -t Hdf -o openscap-report-${{ matrix.container.name }}.sarif openscap-report-${{ matrix.container.name }}.hdf.json"
-          
-          # Filter SARIF results for GitHub Security (remove non-actionable items)
-          docker exec openscap-scanner jq 'del(.runs[].results[] | select(.kind == "notApplicable" or .kind == "pass" or .kind == "informational" ))' "openscap-report-${{ matrix.container.name }}.sarif" > "filtered-${{ matrix.container.name }}.sarif"
-          
-          # Copy results back to host
-          docker cp "openscap-scanner:/workspace/openscap-report-${{ matrix.container.name }}.html" .
-          docker cp "openscap-scanner:/workspace/openscap-report-${{ matrix.container.name }}.xml" .
-          docker cp "openscap-scanner:/workspace/openscap-report-${{ matrix.container.name }}.hdf.json" .
-          docker cp "openscap-scanner:/workspace/filtered-${{ matrix.container.name }}.sarif" .
-
-      - name: Upload OpenSCAP Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: "OpenSCAP Scan Results - ${{ matrix.container.name }}"
-          path: |
-            openscap-report-${{ matrix.container.name }}.html
-            openscap-report-${{ matrix.container.name }}.xml
-            openscap-report-${{ matrix.container.name }}.hdf.json
-            filtered-${{ matrix.container.name }}.sarif
-
-      - name: Upload OpenSCAP SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: "filtered-${{ matrix.container.name }}.sarif"
-          category: "openscap-${{ matrix.container.name }}"
-
-      - name: Cleanup OpenSCAP environment
-        if: always()
-        run: |
-          docker stop openscap-scanner || true
-          docker rm openscap-scanner || true
-
-      - name: Run Inspec Scan
-        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-inspec"
-
-      - name: Extract Inspec Results
-        uses: shrink/actions-docker-extract@v3
-        with:
-          image: "localbuild/${{ matrix.container.name }}-inspec"
-          path: /tmp/junit.xml
-          destination: ubi-inspec-output
-
-      - name: Publish Inspec Test Results
-        uses: EnricoMi/publish-unit-test-result-action/linux@v2
-        with:
-          files: |
-            ubi-inspec-output/junit.xml
-
-      - name: Upload Inspec Scan Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: "Inspec Scan Results - ${{ matrix.container.name }}"
-          path: ubi-inspec-output
-
-      - name: Tag and Push Docker image
-        if: github.event_name == 'push'
-        run: |
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
-          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
-
-      - name: Docker logout
-        if: github.event_name == 'push'
-        run: docker logout > /dev/null 2>&1 ; then
+          if ! docker export "${container_id}" | tar -tvf - | grep -E '\setc/os-release( ->.*)?$' > /dev/null; then
             echo "::warning::The operating system used by ${IMAGE_NAME} could not be detected."
             echo "::warning::This is likely a UBI-based image. Using RHEL 9 profile as default."
             ssg="scap-security-guide-0.1.69/ssg-rhel9-ds.xml"
@@ -227,221 +136,11 @@ jobs:
             
             echo "::notice::Detected OS: ${id} ${version_id}"
             
-            if [ "${id}" = "rhel" ] && echo "${version_id}" | grep -qE '^8(\..*)?
-
-      - name: Convert OpenSCAP results to SARIF
-        run: |
-          # Convert XCCDF to HDF format
-          saf convert xccdf_results2hdf \
-            -i "openscap-report-${{ matrix.container.name }}.xml" \
-            -o "openscap-report-${{ matrix.container.name }}.hdf"
-          
-          # Convert HDF to SARIF format
-          DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 sarif-multitool convert -t Hdf \
-            -o "openscap-report-${{ matrix.container.name }}.sarif" \
-            "openscap-report-${{ matrix.container.name }}.hdf.json"
-          
-          # Filter SARIF results for GitHub Security (remove non-actionable items)
-          jq 'del(.runs[].results[] | select(.kind == "notApplicable" or .kind == "pass" or .kind == "informational" ))' \
-            "openscap-report-${{ matrix.container.name }}.sarif" > "filtered-${{ matrix.container.name }}.sarif"
-
-      - name: Upload OpenSCAP Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: "OpenSCAP Scan Results - ${{ matrix.container.name }}"
-          path: |
-            openscap-report-${{ matrix.container.name }}.html
-            openscap-report-${{ matrix.container.name }}.xml
-            openscap-report-${{ matrix.container.name }}.hdf.json
-            filtered-${{ matrix.container.name }}.sarif
-
-      - name: Upload OpenSCAP SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: "filtered-${{ matrix.container.name }}.sarif"
-          category: "openscap-${{ matrix.container.name }}"
-
-      - name: Run Inspec Scan
-        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-inspec"
-
-      - name: Extract Inspec Results
-        uses: shrink/actions-docker-extract@v3
-        with:
-          image: "localbuild/${{ matrix.container.name }}-inspec"
-          path: /tmp/junit.xml
-          destination: ubi-inspec-output
-
-      - name: Publish Inspec Test Results
-        uses: EnricoMi/publish-unit-test-result-action/linux@v2
-        with:
-          files: |
-            ubi-inspec-output/junit.xml
-
-      - name: Upload Inspec Scan Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: "Inspec Scan Results - ${{ matrix.container.name }}"
-          path: ubi-inspec-output
-
-      - name: Tag and Push Docker image
-        if: github.event_name == 'push'
-        run: |
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
-          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
-
-      - name: Docker logout
-        if: github.event_name == 'push'
-        run: docker logout ; then
+            if [ "${id}" = "rhel" ] && echo "${version_id}" | grep -qE '^8(\..*)?$'; then
               ssg="scap-security-guide-0.1.69/ssg-rhel8-ds.xml"
-            elif [ "${id}" = "rhel" ] && echo "${version_id}" | grep -qE '^9(\..*)?
-
-      - name: Convert OpenSCAP results to SARIF
-        run: |
-          # Convert XCCDF to HDF format
-          saf convert xccdf_results2hdf \
-            -i "openscap-report-${{ matrix.container.name }}.xml" \
-            -o "openscap-report-${{ matrix.container.name }}.hdf"
-          
-          # Convert HDF to SARIF format
-          DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 sarif-multitool convert -t Hdf \
-            -o "openscap-report-${{ matrix.container.name }}.sarif" \
-            "openscap-report-${{ matrix.container.name }}.hdf.json"
-          
-          # Filter SARIF results for GitHub Security (remove non-actionable items)
-          jq 'del(.runs[].results[] | select(.kind == "notApplicable" or .kind == "pass" or .kind == "informational" ))' \
-            "openscap-report-${{ matrix.container.name }}.sarif" > "filtered-${{ matrix.container.name }}.sarif"
-
-      - name: Upload OpenSCAP Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: "OpenSCAP Scan Results - ${{ matrix.container.name }}"
-          path: |
-            openscap-report-${{ matrix.container.name }}.html
-            openscap-report-${{ matrix.container.name }}.xml
-            openscap-report-${{ matrix.container.name }}.hdf.json
-            filtered-${{ matrix.container.name }}.sarif
-
-      - name: Upload OpenSCAP SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: "filtered-${{ matrix.container.name }}.sarif"
-          category: "openscap-${{ matrix.container.name }}"
-
-      - name: Run Inspec Scan
-        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-inspec"
-
-      - name: Extract Inspec Results
-        uses: shrink/actions-docker-extract@v3
-        with:
-          image: "localbuild/${{ matrix.container.name }}-inspec"
-          path: /tmp/junit.xml
-          destination: ubi-inspec-output
-
-      - name: Publish Inspec Test Results
-        uses: EnricoMi/publish-unit-test-result-action/linux@v2
-        with:
-          files: |
-            ubi-inspec-output/junit.xml
-
-      - name: Upload Inspec Scan Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: "Inspec Scan Results - ${{ matrix.container.name }}"
-          path: ubi-inspec-output
-
-      - name: Tag and Push Docker image
-        if: github.event_name == 'push'
-        run: |
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
-          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
-
-      - name: Docker logout
-        if: github.event_name == 'push'
-        run: docker logout ; then
+            elif [ "${id}" = "rhel" ] && echo "${version_id}" | grep -qE '^9(\..*)?$'; then
               ssg="scap-security-guide-0.1.69/ssg-rhel9-ds.xml"
-            elif [ "${id}" = "rhel" ] && echo "${version_id}" | grep -qE '^10(\..*)?
-
-      - name: Convert OpenSCAP results to SARIF
-        run: |
-          # Convert XCCDF to HDF format
-          saf convert xccdf_results2hdf \
-            -i "openscap-report-${{ matrix.container.name }}.xml" \
-            -o "openscap-report-${{ matrix.container.name }}.hdf"
-          
-          # Convert HDF to SARIF format
-          DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 sarif-multitool convert -t Hdf \
-            -o "openscap-report-${{ matrix.container.name }}.sarif" \
-            "openscap-report-${{ matrix.container.name }}.hdf.json"
-          
-          # Filter SARIF results for GitHub Security (remove non-actionable items)
-          jq 'del(.runs[].results[] | select(.kind == "notApplicable" or .kind == "pass" or .kind == "informational" ))' \
-            "openscap-report-${{ matrix.container.name }}.sarif" > "filtered-${{ matrix.container.name }}.sarif"
-
-      - name: Upload OpenSCAP Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: "OpenSCAP Scan Results - ${{ matrix.container.name }}"
-          path: |
-            openscap-report-${{ matrix.container.name }}.html
-            openscap-report-${{ matrix.container.name }}.xml
-            openscap-report-${{ matrix.container.name }}.hdf.json
-            filtered-${{ matrix.container.name }}.sarif
-
-      - name: Upload OpenSCAP SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: "filtered-${{ matrix.container.name }}.sarif"
-          category: "openscap-${{ matrix.container.name }}"
-
-      - name: Run Inspec Scan
-        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-inspec"
-
-      - name: Extract Inspec Results
-        uses: shrink/actions-docker-extract@v3
-        with:
-          image: "localbuild/${{ matrix.container.name }}-inspec"
-          path: /tmp/junit.xml
-          destination: ubi-inspec-output
-
-      - name: Publish Inspec Test Results
-        uses: EnricoMi/publish-unit-test-result-action/linux@v2
-        with:
-          files: |
-            ubi-inspec-output/junit.xml
-
-      - name: Upload Inspec Scan Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: "Inspec Scan Results - ${{ matrix.container.name }}"
-          path: ubi-inspec-output
-
-      - name: Tag and Push Docker image
-        if: github.event_name == 'push'
-        run: |
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
-          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
-
-      - name: Docker logout
-        if: github.event_name == 'push'
-        run: docker logout ; then
+            elif [ "${id}" = "rhel" ] && echo "${version_id}" | grep -qE '^10(\..*)?$'; then
               ssg="scap-security-guide-0.1.69/ssg-rhel10-ds.xml"
             else
               echo "::warning::No specific configuration for ${id} ${version_id}, using RHEL 9 as default"
@@ -470,25 +169,25 @@ jobs:
             --verbose ERROR \
             --fetch-remote-resources \
             --profile "${profile}" \
-            --results "openscap-report-${{ matrix.container.name }}.xml" \
-            --report "openscap-report-${{ matrix.container.name }}.html" \
+            --results "openscap-report-${{ matrix.name }}.xml" \
+            --report "openscap-report-${{ matrix.name }}.html" \
             "ssg/${ssg}"
           OSCAP_EXIT_CODE=$?
           set -e
           
           case "${OSCAP_EXIT_CODE}" in
             0)
-              echo "::notice::All rules passed for ${{ matrix.container.name }}"
+              echo "::notice::All rules passed for ${{ matrix.name }}"
               ;;
             1)
-              echo "::error::An error occurred during evaluation for ${{ matrix.container.name }}"
+              echo "::error::An error occurred during evaluation for ${{ matrix.name }}"
               exit 2
               ;;
             2)
-              echo "::warning::There is at least one rule with either fail or unknown result for ${{ matrix.container.name }}"
+              echo "::warning::There is at least one rule with either fail or unknown result for ${{ matrix.name }}"
               ;;
             *)
-              echo "::error::OpenSCAP returned an unexpected exit status of $OSCAP_EXIT_CODE for ${{ matrix.container.name }}"
+              echo "::error::OpenSCAP returned an unexpected exit status of $OSCAP_EXIT_CODE for ${{ matrix.name }}"
               exit "$OSCAP_EXIT_CODE"
               ;;
           esac
@@ -496,43 +195,52 @@ jobs:
       - name: Convert OpenSCAP results to SARIF
         run: |
           # Convert XCCDF to HDF format
-          saf convert xccdf_results2hdf \
-            -i "openscap-report-${{ matrix.container.name }}.xml" \
-            -o "openscap-report-${{ matrix.container.name }}.hdf"
+          docker exec openscap-scanner saf convert xccdf_results2hdf \
+            -i "openscap-report-${{ matrix.name }}.xml" \
+            -o "openscap-report-${{ matrix.name }}.hdf"
           
           # Convert HDF to SARIF format
-          DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 sarif-multitool convert -t Hdf \
-            -o "openscap-report-${{ matrix.container.name }}.sarif" \
-            "openscap-report-${{ matrix.container.name }}.hdf.json"
+          docker exec openscap-scanner bash -c "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 sarif-multitool convert -t Hdf -o openscap-report-${{ matrix.name }}.sarif openscap-report-${{ matrix.name }}.hdf.json"
           
           # Filter SARIF results for GitHub Security (remove non-actionable items)
-          jq 'del(.runs[].results[] | select(.kind == "notApplicable" or .kind == "pass" or .kind == "informational" ))' \
-            "openscap-report-${{ matrix.container.name }}.sarif" > "filtered-${{ matrix.container.name }}.sarif"
+          docker exec openscap-scanner jq 'del(.runs[].results[] | select(.kind == "notApplicable" or .kind == "pass" or .kind == "informational" ))' "openscap-report-${{ matrix.name }}.sarif" > "filtered-${{ matrix.name }}.sarif"
+          
+          # Copy results back to host
+          docker cp "openscap-scanner:/workspace/openscap-report-${{ matrix.name }}.html" .
+          docker cp "openscap-scanner:/workspace/openscap-report-${{ matrix.name }}.xml" .
+          docker cp "openscap-scanner:/workspace/openscap-report-${{ matrix.name }}.hdf.json" .
+          docker cp "openscap-scanner:/workspace/filtered-${{ matrix.name }}.sarif" .
 
       - name: Upload OpenSCAP Results
         uses: actions/upload-artifact@v4
         with:
-          name: "OpenSCAP Scan Results - ${{ matrix.container.name }}"
+          name: "OpenSCAP Scan Results - ${{ matrix.name }}"
           path: |
-            openscap-report-${{ matrix.container.name }}.html
-            openscap-report-${{ matrix.container.name }}.xml
-            openscap-report-${{ matrix.container.name }}.hdf.json
-            filtered-${{ matrix.container.name }}.sarif
+            openscap-report-${{ matrix.name }}.html
+            openscap-report-${{ matrix.name }}.xml
+            openscap-report-${{ matrix.name }}.hdf.json
+            filtered-${{ matrix.name }}.sarif
 
       - name: Upload OpenSCAP SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: "filtered-${{ matrix.container.name }}.sarif"
-          category: "openscap-${{ matrix.container.name }}"
+          sarif_file: "filtered-${{ matrix.name }}.sarif"
+          category: "openscap-${{ matrix.name }}"
+
+      - name: Cleanup OpenSCAP environment
+        if: always()
+        run: |
+          docker stop openscap-scanner || true
+          docker rm openscap-scanner || true
 
       - name: Run Inspec Scan
-        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.container.name }}-inspec"
+        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.name }}-inspec"
 
       - name: Extract Inspec Results
         uses: shrink/actions-docker-extract@v3
         with:
-          image: "localbuild/${{ matrix.container.name }}-inspec"
+          image: "localbuild/${{ matrix.name }}-inspec"
           path: /tmp/junit.xml
           destination: ubi-inspec-output
 
@@ -545,19 +253,19 @@ jobs:
       - name: Upload Inspec Scan Results
         uses: actions/upload-artifact@v4
         with:
-          name: "Inspec Scan Results - ${{ matrix.container.name }}"
+          name: "Inspec Scan Results - ${{ matrix.name }}"
           path: ubi-inspec-output
 
       - name: Tag and Push Docker image
         if: github.event_name == 'push'
         run: |
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-          docker tag "localbuild/${{ matrix.container.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
+          docker tag "localbuild/${{ matrix.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.name }}:latest"
+          docker tag "localbuild/${{ matrix.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.name }}:${{ env.VERSION }}"
+          docker tag "localbuild/${{ matrix.name }}:${{ env.VERSION }}" "${{ secrets.DOCKER_USERNAME }}/${{ matrix.name }}:${{ github.sha }}"
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:latest"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ env.VERSION }}"
-          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.container.name }}:${{ github.sha }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.name }}:latest"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.name }}:${{ env.VERSION }}"
+          docker push "${{ secrets.DOCKER_USERNAME }}/${{ matrix.name }}:${{ github.sha }}"
 
       - name: Docker logout
         if: github.event_name == 'push'
