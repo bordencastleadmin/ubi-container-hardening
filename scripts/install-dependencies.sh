@@ -6,22 +6,23 @@
 set -e
 
 # Default version if not provided
-DEFAULT_COMPLIANCE_VERSION="0.1.77"
+DEFAULT_COMPLIANCE_AS_CODE_VERSION="0.1.77"
 
 # Parse command line arguments
 usage() {
     echo "Usage: $0 [--version VERSION]"
-    echo "  --version VERSION    Specify ComplianceAsCode version (default: $DEFAULT_COMPLIANCE_VERSION)"
+    echo "  --version VERSION    Specify ComplianceAsCode version (default: $DEFAULT_COMPLIANCE_AS_CODE_VERSION)"
     echo "  -h, --help          Show this help message"
     exit 1
 }
 
-COMPLIANCE_VERSION="$DEFAULT_COMPLIANCE_VERSION"
+# Check if COMPLIANCE_AS_CODE_VERSION environment variable is set, otherwise use default
+COMPLIANCE_AS_CODE_VERSION="${COMPLIANCE_AS_CODE_VERSION:-$DEFAULT_COMPLIANCE_AS_CODE_VERSION}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --version)
-            COMPLIANCE_VERSION="$2"
+            COMPLIANCE_AS_CODE_VERSION="$2"
             shift 2
             ;;
         -h|--help)
@@ -34,7 +35,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-echo "Using ComplianceAsCode version: $COMPLIANCE_VERSION"
+echo "Using ComplianceAsCode version: $COMPLIANCE_AS_CODE_VERSION"
 
 # Detect OS version
 if [ -f /etc/redhat-release ]; then
@@ -83,9 +84,9 @@ $PYTHON_CMD -m venv ansibletemp
 source ansibletemp/bin/activate \
     && python3 -m pip install --upgrade pip \
     && python3 -m pip install ${ANSIBLE_VERSION} \
-    && echo "Fetching SCAP Security Guide release v${COMPLIANCE_VERSION}..." \
-    && RELEASE_TAG="v${COMPLIANCE_VERSION}" \
-    && ASSET_URL="https://github.com/ComplianceAsCode/content/releases/download/$RELEASE_TAG/scap-security-guide-${COMPLIANCE_VERSION}.zip" \
+    && echo "Fetching SCAP Security Guide release v${COMPLIANCE_AS_CODE_VERSION}..." \
+    && RELEASE_TAG="v${COMPLIANCE_AS_CODE_VERSION}" \
+    && ASSET_URL="https://github.com/ComplianceAsCode/content/releases/download/$RELEASE_TAG/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}.zip" \
     && curl -L -o content.zip "$ASSET_URL" \
     && unzip -q content.zip -d temp_content \
     && mv temp_content/scap-security-guide-*/ content \
@@ -97,4 +98,4 @@ source ansibletemp/bin/activate \
 # Set FIPS crypto policy
 update-crypto-policies --set FIPS
 
-echo "Hardening completed successfully for RHEL/UBI $OS_VERSION using ComplianceAsCode v${COMPLIANCE_VERSION}"
+echo "Hardening completed successfully for RHEL/UBI $OS_VERSION using ComplianceAsCode v${COMPLIANCE_AS_CODE_VERSION}"
