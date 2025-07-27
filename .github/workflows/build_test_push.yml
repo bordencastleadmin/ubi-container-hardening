@@ -9,7 +9,7 @@ on:
 env:
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-  COMPLIANCE_AS_CODE_VERSION: "0.1.77"
+  COMPLIANCE_AS_CODE_VERSION: "0.1.69"
 
 jobs:
   build-test-push:
@@ -71,6 +71,7 @@ jobs:
           docker build . \
             --file ${{ matrix.dockerfile }} \
             --build-arg BASE_IMAGE="${{ matrix.repo_name }}" \
+            --build-arg COMPLIANCE_AS_CODE_VERSION="${{ env.COMPLIANCE_AS_CODE_VERSION }}" \
             --tag "localbuild/${{ matrix.name }}:${{ env.VERSION }}"
 
       - name: Vulnerability scan image
@@ -231,7 +232,7 @@ jobs:
           docker rm openscap-scanner || true
 
       - name: Run Inspec Scan
-        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.name }}:${{ env.VERSION }}" --tag "localbuild/${{ matrix.name }}-inspec"
+        run: docker build . --file Dockerfile.inspec --build-arg CONTAINER="localbuild/${{ matrix.name }}:${{ env.VERSION }}" --build-arg COMPLIANCE_AS_CODE_VERSION="${{ env.COMPLIANCE_AS_CODE_VERSION }}" --tag "localbuild/${{ matrix.name }}-inspec"
 
       - name: Extract Inspec Results
         uses: shrink/actions-docker-extract@v3
