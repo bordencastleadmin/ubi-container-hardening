@@ -77,8 +77,8 @@ jobs:
 
       - name: Run OpenSCAP Scan with Script
         run: |
-          chmod +x ./openscap-scan.sh
-          ./openscap-scan.sh \
+          chmod +x ./scripts/openscap-scan.sh
+          ./scripts/openscap-scan.sh \
             --container "localbuild/${{ matrix.name }}:${{ env.VERSION }}" \
             --compliance-version "${{ env.COMPLIANCE_AS_CODE_VERSION }}" \
             --output-dir "ubi-openscap-output"
