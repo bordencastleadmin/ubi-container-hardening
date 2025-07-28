@@ -32,7 +32,7 @@ jobs:
           - {name: "ubi9-openjdk-21", repo_name: "registry.redhat.io/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi-openjdk"}
 
           #APPLICATION IMAGES
-          - {name: "jenkins-ubi9-openjdk-21", repo_name: "registry.redhat.io/ubi9/openjdk-21", dockerfile: "Dockerfile.jenkins"}
+          #- {name: "jenkins-ubi9-openjdk-21", repo_name: "registry.redhat.io/ubi9/openjdk-21", dockerfile: "Dockerfile.jenkins"}
     
     steps:
       - uses: actions/checkout@v4
