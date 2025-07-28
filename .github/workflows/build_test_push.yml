@@ -17,15 +17,27 @@ jobs:
     strategy:
       matrix:
         include:
-          - {name: "ubi8", repo_name: "registry.redhat.io/ubi8", dockerfile: "Dockerfile.ubi8", goss_file: "goss-ubi8.yaml"}
-          #- {name: "ubi9", repo_name: "registry.redhat.io/ubi9", dockerfile: "Dockerfile.ubi9", goss_file: "goss-ubi9.yaml"}
-          #- {name: "ubi10", repo_name: "registry.redhat.io/ubi10", dockerfile: "Dockerfile.ubi10", goss_file: "goss-ubi10.yaml"}
-          # UBI 8 Python variants
-          - {name: "ubi8-python-39", repo_name: "registry.redhat.io/ubi8/python-39", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-ubi8-python-39.yaml"}
-          - {name: "ubi8-python-311", repo_name: "registry.redhat.io/ubi8/python-311", dockerfile: "Dockerfile.ubi8-python", goss_file: "goss-ubi8-python-311.yaml"}
-          # UBI 8 OpenJDK variants
-          - {name: "ubi8-openjdk-17", repo_name: "registry.redhat.io/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-ubi8-openjdk-17.yaml"}
-          - {name: "ubi8-openjdk-21", repo_name: "registry.redhat.io/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi8-openjdk", goss_file: "goss-ubi8-openjdk-21.yaml"}
+          #UBI BASE IMAGES
+          - {name: "ubi8", repo_name: "registry.redhat.io/ubi8", dockerfile: "Dockerfile.ubi"}
+          - {name: "ubi9", repo_name: "registry.redhat.io/ubi9", dockerfile: "Dockerfile.ubi9"}
+          - {name: "ubi10", repo_name: "registry.redhat.io/ubi10", dockerfile: "Dockerfile.ubi10"}
+
+          #UBI CI IMAGES
+          - {name: "ubi8-python-39", repo_name: "registry.redhat.io/ubi8/python-39", dockerfile: "Dockerfile.ubi-python"}
+          - {name: "ubi8-python-311", repo_name: "registry.redhat.io/ubi8/python-311", dockerfile: "Dockerfile.ubi-python"}
+          - {name: "ubi9-python-39", repo_name: "registry.redhat.io/ubi9/python-39", dockerfile: "Dockerfile.ubi-python"}
+          - {name: "ubi9-python-311", repo_name: "registry.redhat.io/ubi9/python-311", dockerfile: "Dockerfile.ubi-python"}
+          - {name: "ubi10-python-39", repo_name: "registry.redhat.io/ubi10/python-39", dockerfile: "Dockerfile.ubi-python"}
+          - {name: "ubi10-python-311", repo_name: "registry.redhat.io/ubi10/python-311", dockerfile: "Dockerfile.ubi-python"}
+          - {name: "ubi8-openjdk-17", repo_name: "registry.redhat.io/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi-openjdk"}
+          - {name: "ubi8-openjdk-21", repo_name: "registry.redhat.io/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi-openjdk"}
+          - {name: "ubi9-openjdk-17", repo_name: "registry.redhat.io/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi-openjdk"}
+          - {name: "ubi9-openjdk-21", repo_name: "registry.redhat.io/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi-openjdk"}
+          - {name: "ubi10-openjdk-17", repo_name: "registry.redhat.io/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi-openjdk"}
+          - {name: "ubi10-openjdk-21", repo_name: "registry.redhat.io/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi-openjdk"}
+
+          #APPLICATION IMAGES
+          - {name: "jenkins-ubi9-openjdk-21", repo_name: "registry.redhat.io/ubi9/openjdk-21", dockerfile: "Dockerfile.jenkins"}
     
     steps:
       - uses: actions/checkout@v4
