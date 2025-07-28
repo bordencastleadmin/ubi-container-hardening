@@ -19,7 +19,7 @@ jobs:
         include:
           #UBI BASE IMAGES
           - {name: "ubi8", repo_name: "registry.redhat.io/ubi8", dockerfile: "Dockerfile.ubi"}
-          - {name: "ubi9", repo_name: "registry.redhat.io/ubi9", dockerfile: "Dockerfile.ubi9"}
+          - {name: "ubi9", repo_name: "registry.redhat.io/ubi9", dockerfile: "Dockerfile.ubi"}
 
           #UBI CI IMAGES
           - {name: "ubi8-python-39", repo_name: "registry.redhat.io/ubi8/python-39", dockerfile: "Dockerfile.ubi-python"}
