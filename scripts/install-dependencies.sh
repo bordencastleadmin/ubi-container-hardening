@@ -46,6 +46,19 @@ else
     exit 1
 fi
 
+# Check if dnf is available, if not, install it using microdnf
+if ! command -v dnf &> /dev/null; then
+    if command -v microdnf &> /dev/null; then
+        MICRODNF_DETECTED=true
+        echo "microdnf detected, installing dnf"
+        microdnf update -y
+        microdnf install -y dnf
+        echo "dnf installed successfully"
+    else
+        echo "Error: dnf could not be found and microdnf is not available"
+    fi
+fi
+
 # Install packages based on OS version
 dnf update -y
 dnf install -y postfix unzip git
@@ -57,6 +70,9 @@ case $OS_VERSION in
         PLAYBOOK_PATH="ansible/rhel8-playbook-stig.yml"
         ANSIBLE_VERSION="ansible==7.4.0"
         SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-08-040110"
+        if [ "$MICRODNF_DETECTED" = true ]; then
+            SKIP_TAGS="$SKIP_TAGS,CCE-80935-0,CCE-85897-7,CCE-85899-3"
+        fi
         ;;
     9)
         dnf install -y s-nail python3-pip
@@ -64,6 +80,9 @@ case $OS_VERSION in
         PLAYBOOK_PATH="ansible/rhel9-playbook-stig.yml"
         ANSIBLE_VERSION="ansible==8.6.0"
         SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-09-040110"
+        if [ "$MICRODNF_DETECTED" = true ]; then
+            SKIP_TAGS="$SKIP_TAGS,CCE-80935-0,CCE-85897-7,CCE-85899-3"
+        fi
         ;;
     10)
         dnf install -y s-nail python3-pip
@@ -71,6 +90,9 @@ case $OS_VERSION in
         PLAYBOOK_PATH="ansible/rhel10-playbook-stig.yml"
         ANSIBLE_VERSION="ansible==8.6.0"
         SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-10-040110"
+        if [ "$MICRODNF_DETECTED" = true ]; then
+            SKIP_TAGS="$SKIP_TAGS,CCE-80935-0,CCE-85897-7,CCE-85899-3"
+        fi
         ;;
     *)
         echo "Error: Unsupported OS version: $OS_VERSION"

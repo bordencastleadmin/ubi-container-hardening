@@ -87,7 +87,7 @@ docker run --name "$TEMP_CONTAINER" \
         wget -O /tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}.zip https://github.com/ComplianceAsCode/content/releases/download/v${COMPLIANCE_AS_CODE_VERSION}/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}.zip
         
         echo 'Extracting SCAP Security Guide...'
-        unzip -q /tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}.zip
+        unzip -o /tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}.zip *rhel*-ds.xml -d /tmp
         
         echo 'Detecting OS version and running scan...'
         source /etc/os-release
