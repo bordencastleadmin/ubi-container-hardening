@@ -8,7 +8,7 @@ ENV BUILDER=/tmp/builder
 
 # Install Python 3.12 (default in Ubuntu 24.04)
 RUN apt-get update -y && \
-    apt-get install -y python3.12 python3.12-venv python3.12-pip && \
+    apt-get install -y python3.12 python3.12-venv python3-pip && \
     ln -sf /usr/bin/python3.12 /usr/bin/python3 && \
     ln -sf /usr/bin/python3.12 /usr/bin/python
 
