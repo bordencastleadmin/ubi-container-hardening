@@ -105,7 +105,7 @@ if [ "$OS_TYPE" = "rhel" ]; then
             fi
             ;;
         10)
-            dnf install -y s-nail python3-pip
+            dnf install -y python3-pip
             PYTHON_CMD="python3"
             PLAYBOOK_PATH="ansible/rhel10-playbook-stig.yml"
             ANSIBLE_VERSION="ansible==8.6.0"
