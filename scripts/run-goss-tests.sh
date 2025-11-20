@@ -92,16 +92,20 @@ if ! command -v goss &> /dev/null; then
     echo "Downloading goss v${GOSS_VERSION}..."
     curl -fsSL "https://github.com/goss-org/goss/releases/download/v${GOSS_VERSION}/goss-linux-amd64" -o goss
     chmod +x goss
-    GOSS_CMD="./goss"
-else
-    GOSS_CMD="goss"
 fi
 
 echo "Running goss tests for $CONTAINER_NAME..."
 echo "=========================================="
 
+# Ensure goss binary exists
+if [ ! -f "$(pwd)/goss" ]; then
+    echo "Error: goss binary not found at $(pwd)/goss"
+    exit 1
+fi
+
 # Run goss tests in the container
-docker run --rm -v "$(pwd)/$TEST_FILE:/goss.yaml:ro" \
+docker run --rm \
+    -v "$(pwd)/$TEST_FILE:/goss.yaml:ro" \
     -v "$(pwd)/goss:/usr/local/bin/goss:ro" \
     --entrypoint="" \
     "$CONTAINER_IMAGE" \
