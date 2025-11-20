@@ -1,0 +1,25 @@
+ARG BASE_IMAGE=ubuntu:22.04
+FROM ${BASE_IMAGE}
+
+ARG COMPLIANCE_AS_CODE_VERSION=0.1.78
+ENV COMPLIANCE_AS_CODE_VERSION=${COMPLIANCE_AS_CODE_VERSION}
+
+ENV BUILDER=/tmp/builder
+
+# Install Python 3.11 (default in Ubuntu 22.04)
+RUN apt-get update -y && \
+    apt-get install -y python3.11 python3.11-venv python3.11-pip && \
+    ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
+    ln -sf /usr/bin/python3.11 /usr/bin/python
+
+RUN mkdir ${BUILDER}
+WORKDIR ${BUILDER}
+COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh
+RUN ${BUILDER}/install-dependencies.sh --version ${COMPLIANCE_AS_CODE_VERSION}
+
+COPY --chmod=0755 scripts/cleanup-apt.sh ${BUILDER}/cleanup-apt.sh
+RUN ${BUILDER}/cleanup-apt.sh
+
+WORKDIR /
+
+USER root
