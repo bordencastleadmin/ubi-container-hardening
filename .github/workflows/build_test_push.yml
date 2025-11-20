@@ -25,7 +25,7 @@ jobs:
           - {name: "ubi10", repo_name: "registry.redhat.io/ubi10/ubi", dockerfile: "Dockerfile.ubi"}
           - {name: "ubi10-minimal", repo_name: "registry.redhat.io/ubi10/ubi-minimal", dockerfile: "Dockerfile.ubi"}
 
-          #UBI CI IMAGES - Python (only 3.9 and 3.11 available)
+          #UBI CI IMAGES - Python (3.11 only, 3.9 is EOL)
           - {name: "ubi8-python-311", repo_name: "registry.redhat.io/ubi8/python-311", dockerfile: "Dockerfile.ubi-python"}
           - {name: "ubi9-python-311", repo_name: "registry.redhat.io/ubi9/python-311", dockerfile: "Dockerfile.ubi-python"}
           - {name: "ubi8-openjdk-17", repo_name: "registry.redhat.io/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi-openjdk"}
@@ -39,7 +39,6 @@ jobs:
           - {name: "ubuntu-24.04", repo_name: "ubuntu:24.04", dockerfile: "Dockerfile.ubuntu"}
 
           #UBUNTU CI IMAGES - Python (using Ubuntu base + Python installation)
-          - {name: "ubuntu-python-39", repo_name: "ubuntu:22.04", dockerfile: "Dockerfile.ubuntu-python39"}
           - {name: "ubuntu-python-311", repo_name: "ubuntu:22.04", dockerfile: "Dockerfile.ubuntu-python311"}
           - {name: "ubuntu-python-312", repo_name: "ubuntu:24.04", dockerfile: "Dockerfile.ubuntu-python312"}
           - {name: "ubuntu-python-313", repo_name: "ubuntu:24.04", dockerfile: "Dockerfile.ubuntu-python313"}

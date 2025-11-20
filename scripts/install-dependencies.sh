@@ -148,7 +148,7 @@ elif [ "$OS_TYPE" = "ubuntu" ]; then
 fi
 
 # Create virtual environment and run hardening
-$PYTHON_CMD -m venv ansibletemp
+$PYTHON_CMD -m venv ansibletemp --system-site-packages
 source ansibletemp/bin/activate \
     && python3 -m pip install --upgrade pip \
     && python3 -m pip install ${ANSIBLE_VERSION} \
