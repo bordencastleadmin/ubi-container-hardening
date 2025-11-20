@@ -82,6 +82,8 @@ if [ "$OS_TYPE" = "rhel" ]; then
 elif [ "$OS_TYPE" = "ubuntu" ]; then
     # Update package lists and install Ubuntu packages
     apt-get update -y
+    # Pre-configure postfix for non-interactive installation
+    echo "postfix postfix/main_mailer_type select No configuration" | debconf-set-selections
     apt-get install -y postfix unzip git curl python3 python3-pip python3-venv python3-apt
     PKG_MANAGER="apt-get"
 fi
