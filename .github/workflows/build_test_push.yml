@@ -76,13 +76,14 @@ jobs:
           echo "BASE_IMAGE=${{ matrix.repo_name }}"
           echo "COMPLIANCE_AS_CODE_VERSION=${{ env.COMPLIANCE_AS_CODE_VERSION }}"
           
-      - name: Build the Docker image
+      - name: Build the Docker image with dynamic user detection
         run: |
-          docker build . \
-            --file ${{ matrix.dockerfile }} \
-            --build-arg BASE_IMAGE="${{ matrix.repo_name }}" \
-            --build-arg COMPLIANCE_AS_CODE_VERSION="${{ env.COMPLIANCE_AS_CODE_VERSION }}" \
-            --tag "localbuild/${{ matrix.name }}:${{ env.VERSION }}"
+          chmod +x ./build-with-user-detection.sh
+          ./build-with-user-detection.sh \
+            -f "${{ matrix.dockerfile }}" \
+            -t "localbuild/${{ matrix.name }}:${{ env.VERSION }}" \
+            --base-image "${{ matrix.repo_name }}" \
+            --version "${{ env.COMPLIANCE_AS_CODE_VERSION }}"
 
       - name: Vulnerability scan image
         id: vulnerability-scan

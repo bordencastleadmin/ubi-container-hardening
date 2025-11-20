@@ -24,8 +24,14 @@ WORKDIR /
 
 # Create non-root user if needed (when original was root)
 RUN if [ "${ORIGINAL_USER}" = "0" ]; then \
-        echo "Creating non-root user ${FINAL_USER}"; \
-        groupadd -g ${FINAL_USER} appuser && useradd -u ${FINAL_USER} -g appuser -m appuser; \
+        echo "Checking if user ${FINAL_USER} exists"; \
+        if ! id -u ${FINAL_USER} >/dev/null 2>&1; then \
+            echo "Creating non-root user ${FINAL_USER}"; \
+            groupadd -g ${FINAL_USER} appuser 2>/dev/null || true; \
+            useradd -u ${FINAL_USER} -g appuser -m appuser 2>/dev/null || useradd -u ${FINAL_USER} -g ${FINAL_USER} -m appuser; \
+        else \
+            echo "User ${FINAL_USER} already exists, skipping creation"; \
+        fi; \
     fi
 
 # Switch to final user
