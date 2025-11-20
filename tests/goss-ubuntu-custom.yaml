@@ -1,0 +1,44 @@
+# Goss tests for Ubuntu custom containers (should create appuser 1001)
+# These containers (Ubuntu base, Ubuntu Python) originally run as root, so we create non-root user 1001
+
+user:
+  "appuser":
+    exists: true
+    uid: 1001
+    gid: 1001
+    groups:
+      - "appuser"
+    home: "/home/appuser"
+
+command:
+  "whoami returns appuser":
+    exec: "whoami"
+    exit-status: 0
+    stdout:
+      - "appuser"
+
+  "current user id is 1001":
+    exec: "id -u"
+    exit-status: 0
+    stdout:
+      - "1001"
+
+  "not running as root":
+    exec: "id -u"
+    exit-status: 0
+    stdout:
+      - "!0"
+
+  "appuser owns home directory":
+    exec: "ls -ld /home/appuser"
+    exit-status: 0
+    stdout:
+      - "/appuser.*appuser/"
+
+file:
+  "/home/appuser":
+    exists: true
+    owner: "appuser"
+    group: "appuser"
+    mode: "0755"
+    filetype: "directory"

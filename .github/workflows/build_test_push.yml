@@ -99,6 +99,13 @@ jobs:
         with:
           sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
 
+      - name: Run Goss User Validation Tests
+        run: |
+          chmod +x ./scripts/run-goss-tests.sh
+          ./scripts/run-goss-tests.sh \
+            --container "localbuild/${{ matrix.name }}:${{ env.VERSION }}" \
+            --container-name "${{ matrix.name }}"
+
       - name: Run OpenSCAP Scan with Script
         run: |
           chmod +x ./scripts/openscap-scan.sh
