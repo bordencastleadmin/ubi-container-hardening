@@ -22,4 +22,6 @@ RUN ${BUILDER}/cleanup-apt.sh
 
 WORKDIR /
 
-USER root
+# Create non-root user
+RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser appuser
+USER 1001
