@@ -77,7 +77,7 @@ if [ "$OS_TYPE" = "rhel" ]; then
 
     # Install RHEL/UBI packages
     dnf update -y
-    dnf install -y postfix unzip git
+    dnf install -y postfix unzip git crypto-policies-scripts
     PKG_MANAGER="dnf"
 elif [ "$OS_TYPE" = "ubuntu" ]; then
     # Update package lists and install Ubuntu packages
