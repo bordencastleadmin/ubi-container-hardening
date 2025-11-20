@@ -81,10 +81,12 @@ if [ "$OS_TYPE" = "rhel" ]; then
     PKG_MANAGER="dnf"
 elif [ "$OS_TYPE" = "ubuntu" ]; then
     # Update package lists and install Ubuntu packages
+    export DEBIAN_FRONTEND=noninteractive
     apt-get update -y
     # Pre-configure postfix for non-interactive installation
     echo "postfix postfix/main_mailer_type select No configuration" | debconf-set-selections
-    apt-get install -y postfix unzip git curl python3 python3-pip python3-venv python3-apt
+    echo "postfix postfix/mailname string localhost" | debconf-set-selections
+    apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" postfix unzip git curl python3 python3-pip python3-venv python3-apt
     PKG_MANAGER="apt-get"
 fi
 
