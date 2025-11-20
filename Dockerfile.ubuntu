@@ -29,6 +29,7 @@ RUN if [ "${ORIGINAL_USER}" = "0" ]; then \
             echo "Creating non-root user ${FINAL_USER}"; \
             groupadd -g ${FINAL_USER} appuser 2>/dev/null || true; \
             useradd -u ${FINAL_USER} -g appuser -m appuser 2>/dev/null || useradd -u ${FINAL_USER} -g ${FINAL_USER} -m appuser; \
+            chmod 755 /home/appuser; \
         else \
             echo "User ${FINAL_USER} already exists, skipping creation"; \
         fi; \

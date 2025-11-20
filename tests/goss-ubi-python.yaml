@@ -22,10 +22,8 @@ command:
       - "1001"
 
   "not running as root":
-    exec: "id -u"
+    exec: "test $(id -u) -ne 0"
     exit-status: 0
-    stdout:
-      - "!0"
 
   "python is accessible":
     exec: "python --version"
