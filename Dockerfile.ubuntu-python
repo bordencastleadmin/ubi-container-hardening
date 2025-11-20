@@ -16,6 +16,19 @@ RUN ${BUILDER}/cleanup-apt.sh
 
 WORKDIR /
 
-# Create non-root user for Python slim base image
-RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser appuser
-USER 1001
+# Arguments for user restoration
+ARG FINAL_USER=1001
+ARG ORIGINAL_USER=0
+
+# Create non-root user if needed and fix Python library ownership
+RUN if [ "${ORIGINAL_USER}" = "0" ]; then \
+        echo "Creating non-root user ${FINAL_USER}"; \
+        groupadd -g ${FINAL_USER} appuser && useradd -u ${FINAL_USER} -g appuser -m appuser; \
+        echo "Fixing Python library ownership for user ${FINAL_USER}"; \
+        chown -R ${FINAL_USER}:${FINAL_USER} /usr/local/lib/python* 2>/dev/null || true; \
+        chown -R ${FINAL_USER}:${FINAL_USER} /usr/local/bin 2>/dev/null || true; \
+        chown -R ${FINAL_USER}:${FINAL_USER} /home/appuser 2>/dev/null || true; \
+    fi
+
+# Switch to final user
+USER ${FINAL_USER}
