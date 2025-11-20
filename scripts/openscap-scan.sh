@@ -80,38 +80,73 @@ docker run --name "$TEMP_CONTAINER" \
     "$CONTAINER" \
     bash -c "
         set -e
-        echo 'Installing required tools...'
-        dnf install -y openscap-scanner unzip wget
+        echo 'Detecting OS and installing required tools...'
+        if [ -f /etc/redhat-release ]; then
+            OS_TYPE="rhel"
+            dnf install -y openscap-scanner unzip wget
+        elif [ -f /etc/lsb-release ] || [ -f /etc/os-release ]; then
+            OS_TYPE="ubuntu"
+            apt-get update -y
+            apt-get install -y libopenscap8 unzip wget python3
+        else
+            echo 'Error: Unsupported OS for OpenSCAP scanning'
+            exit 1
+        fi
         
         echo 'Downloading SCAP Security Guide...'
         wget -O /tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}.zip https://github.com/ComplianceAsCode/content/releases/download/v${COMPLIANCE_AS_CODE_VERSION}/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}.zip
         
         echo 'Extracting SCAP Security Guide...'
-        unzip -o /tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}.zip *rhel*-ds.xml -d /tmp
-        
+        if [ \"\$OS_TYPE\" = \"rhel\" ]; then
+            unzip -o /tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}.zip *rhel*-ds.xml -d /tmp
+        elif [ \"\$OS_TYPE\" = \"ubuntu\" ]; then
+            unzip -o /tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}.zip *ubuntu*-ds.xml -d /tmp
+        fi
+
         echo 'Detecting OS version and running scan...'
         source /etc/os-release
-        case \"\$VERSION_ID\" in
-            8*)
-                SCAP_FILE=\"/tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}/ssg-rhel8-ds.xml\"
-                ;;
-            9*)
-                SCAP_FILE=\"/tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}/ssg-rhel9-ds.xml\"
-                ;;
-            10*)
-                SCAP_FILE=\"/tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}/ssg-rhel10-ds.xml\"
-                ;;
-            *)
-                echo \"Unsupported OS version: \$VERSION_ID\"
-                exit 1
-                ;;
-        esac
+        if [ \"\$OS_TYPE\" = \"rhel\" ]; then
+            case \"\$VERSION_ID\" in
+                8*)
+                    SCAP_FILE=\"/tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}/ssg-rhel8-ds.xml\"
+                    PROFILE=\"xccdf_org.ssgproject.content_profile_stig\"
+                    ;;
+                9*)
+                    SCAP_FILE=\"/tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}/ssg-rhel9-ds.xml\"
+                    PROFILE=\"xccdf_org.ssgproject.content_profile_stig\"
+                    ;;
+                10*)
+                    SCAP_FILE=\"/tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}/ssg-rhel10-ds.xml\"
+                    PROFILE=\"xccdf_org.ssgproject.content_profile_stig\"
+                    ;;
+                *)
+                    echo \"Unsupported RHEL/UBI version: \$VERSION_ID\"
+                    exit 1
+                    ;;
+            esac
+        elif [ \"\$OS_TYPE\" = \"ubuntu\" ]; then
+            case \"\$VERSION_ID\" in
+                22.04)
+                    SCAP_FILE=\"/tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}/ssg-ubuntu2204-ds.xml\"
+                    PROFILE=\"xccdf_org.ssgproject.content_profile_stig\"
+                    ;;
+                24.04)
+                    SCAP_FILE=\"/tmp/scap-security-guide-${COMPLIANCE_AS_CODE_VERSION}/ssg-ubuntu2404-ds.xml\"
+                    PROFILE=\"xccdf_org.ssgproject.content_profile_stig\"
+                    ;;
+                *)
+                    echo \"Unsupported Ubuntu version: \$VERSION_ID\"
+                    exit 1
+                    ;;
+            esac
+        fi
         
         echo \"Using SCAP file: \$SCAP_FILE\"
+        echo \"Using profile: \$PROFILE\"
         echo \"Running OpenSCAP evaluation...\"
-        
+
         oscap xccdf eval \\
-            --profile xccdf_org.ssgproject.content_profile_stig \\
+            --profile \"\$PROFILE\" \\
             --results /output/oscap-report.xml \\
             --report /output/openscap.html \\
             --oval-results \"\$SCAP_FILE\" 2>&1 || true

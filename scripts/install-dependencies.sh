@@ -39,67 +39,108 @@ echo "Using ComplianceAsCode version: $COMPLIANCE_AS_CODE_VERSION"
 
 # Detect OS version
 if [ -f /etc/redhat-release ]; then
+    OS_TYPE="rhel"
     OS_VERSION=$(grep -oE '[0-9]+' /etc/redhat-release | head -n1)
     echo "Detected RHEL/UBI version: $OS_VERSION"
+elif [ -f /etc/lsb-release ] || [ -f /etc/os-release ]; then
+    OS_TYPE="ubuntu"
+    if [ -f /etc/lsb-release ]; then
+        OS_VERSION=$(grep DISTRIB_RELEASE /etc/lsb-release | cut -d'=' -f2)
+    else
+        OS_VERSION=$(grep VERSION_ID /etc/os-release | cut -d'=' -f2 | tr -d '"')
+    fi
+    echo "Detected Ubuntu version: $OS_VERSION"
 else
-    echo "Error: Could not detect Red Hat based OS"
+    echo "Error: Could not detect supported OS (RHEL/UBI or Ubuntu)"
     exit 1
 fi
 
-# Check if dnf is available, if not, install it using microdnf
-if ! command -v dnf &> /dev/null; then
-    if command -v microdnf &> /dev/null; then
-        MICRODNF_DETECTED=true
-        echo "microdnf detected, installing dnf"
-        microdnf update -y
-        microdnf install -y dnf
-        echo "dnf installed successfully"
-    else
-        echo "Error: dnf could not be found and microdnf is not available"
+# Install packages based on OS type and version
+if [ "$OS_TYPE" = "rhel" ]; then
+    # Check if dnf is available, if not, install it using microdnf
+    if ! command -v dnf &> /dev/null; then
+        if command -v microdnf &> /dev/null; then
+            MICRODNF_DETECTED=true
+            echo "microdnf detected, installing dnf"
+            microdnf update -y
+            microdnf install -y dnf
+            echo "dnf installed successfully"
+        else
+            echo "Error: dnf could not be found and microdnf is not available"
+        fi
     fi
+
+    # Install RHEL/UBI packages
+    dnf update -y
+    dnf install -y postfix unzip git
+    PKG_MANAGER="dnf"
+elif [ "$OS_TYPE" = "ubuntu" ]; then
+    # Update package lists and install Ubuntu packages
+    apt-get update -y
+    apt-get install -y postfix unzip git curl python3 python3-pip python3-venv
+    PKG_MANAGER="apt-get"
 fi
 
-# Install packages based on OS version
-dnf update -y
-dnf install -y postfix unzip git
-
-case $OS_VERSION in
-    8)
-        dnf install -y mailx python3.11-pip
-        PYTHON_CMD="python3.11"
-        PLAYBOOK_PATH="ansible/rhel8-playbook-stig.yml"
-        ANSIBLE_VERSION="ansible==7.4.0"
-        SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-08-040110"
-        if [ "$MICRODNF_DETECTED" = true ]; then
-            SKIP_TAGS="$SKIP_TAGS,CCE-80935-0,CCE-85897-7,CCE-85899-3"
-        fi
-        ;;
-    9)
-        dnf install -y s-nail python3-pip
-        PYTHON_CMD="python3"
-        PLAYBOOK_PATH="ansible/rhel9-playbook-stig.yml"
-        ANSIBLE_VERSION="ansible==8.6.0"
-        SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-09-040110"
-        if [ "$MICRODNF_DETECTED" = true ]; then
-            SKIP_TAGS="$SKIP_TAGS,CCE-80935-0,CCE-85897-7,CCE-85899-3"
-        fi
-        ;;
-    10)
-        dnf install -y s-nail python3-pip
-        PYTHON_CMD="python3"
-        PLAYBOOK_PATH="ansible/rhel10-playbook-stig.yml"
-        ANSIBLE_VERSION="ansible==8.6.0"
-        SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-10-040110"
-        if [ "$MICRODNF_DETECTED" = true ]; then
-            SKIP_TAGS="$SKIP_TAGS,CCE-80935-0,CCE-85897-7,CCE-85899-3"
-        fi
-        ;;
-    *)
-        echo "Error: Unsupported OS version: $OS_VERSION"
-        echo "Supported versions: RHEL/UBI 8, 9, 10"
-        exit 1
-        ;;
-esac
+# Configure OS-specific settings
+if [ "$OS_TYPE" = "rhel" ]; then
+    case $OS_VERSION in
+        8)
+            dnf install -y mailx python3.11-pip
+            PYTHON_CMD="python3.11"
+            PLAYBOOK_PATH="ansible/rhel8-playbook-stig.yml"
+            ANSIBLE_VERSION="ansible==7.4.0"
+            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-08-040110"
+            if [ "$MICRODNF_DETECTED" = true ]; then
+                SKIP_TAGS="$SKIP_TAGS,CCE-80935-0,CCE-85897-7,CCE-85899-3"
+            fi
+            ;;
+        9)
+            dnf install -y s-nail python3-pip
+            PYTHON_CMD="python3"
+            PLAYBOOK_PATH="ansible/rhel9-playbook-stig.yml"
+            ANSIBLE_VERSION="ansible==8.6.0"
+            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-09-040110"
+            if [ "$MICRODNF_DETECTED" = true ]; then
+                SKIP_TAGS="$SKIP_TAGS,CCE-80935-0,CCE-85897-7,CCE-85899-3"
+            fi
+            ;;
+        10)
+            dnf install -y s-nail python3-pip
+            PYTHON_CMD="python3"
+            PLAYBOOK_PATH="ansible/rhel10-playbook-stig.yml"
+            ANSIBLE_VERSION="ansible==8.6.0"
+            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-10-040110"
+            if [ "$MICRODNF_DETECTED" = true ]; then
+                SKIP_TAGS="$SKIP_TAGS,CCE-80935-0,CCE-85897-7,CCE-85899-3"
+            fi
+            ;;
+        *)
+            echo "Error: Unsupported RHEL/UBI version: $OS_VERSION"
+            echo "Supported RHEL/UBI versions: 8, 9, 10"
+            exit 1
+            ;;
+    esac
+elif [ "$OS_TYPE" = "ubuntu" ]; then
+    case $OS_VERSION in
+        22.04)
+            PYTHON_CMD="python3"
+            PLAYBOOK_PATH="ansible/ubuntu2204-playbook-stig.yml"
+            ANSIBLE_VERSION="ansible==8.6.0"
+            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd"
+            ;;
+        24.04)
+            PYTHON_CMD="python3"
+            PLAYBOOK_PATH="ansible/ubuntu2404-playbook-stig.yml"
+            ANSIBLE_VERSION="ansible==8.6.0"
+            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd"
+            ;;
+        *)
+            echo "Error: Unsupported Ubuntu version: $OS_VERSION"
+            echo "Supported Ubuntu versions: 22.04, 24.04"
+            exit 1
+            ;;
+    esac
+fi
 
 # Create virtual environment and run hardening
 $PYTHON_CMD -m venv ansibletemp
@@ -117,7 +158,11 @@ source ansibletemp/bin/activate \
     && ls -R content \
     && ansible-playbook -i "localhost," -c local "content/$PLAYBOOK_PATH" --skip-tags="$SKIP_TAGS"
 
-# Set FIPS crypto policy
-update-crypto-policies --set FIPS
-
-echo "Hardening completed successfully for RHEL/UBI $OS_VERSION using ComplianceAsCode v${COMPLIANCE_AS_CODE_VERSION}"
+# Set FIPS crypto policy (RHEL only)
+if [ "$OS_TYPE" = "rhel" ]; then
+    update-crypto-policies --set FIPS
+    echo "Hardening completed successfully for RHEL/UBI $OS_VERSION using ComplianceAsCode v${COMPLIANCE_AS_CODE_VERSION}"
+elif [ "$OS_TYPE" = "ubuntu" ]; then
+    echo "Hardening completed successfully for Ubuntu $OS_VERSION using ComplianceAsCode v${COMPLIANCE_AS_CODE_VERSION}"
+    echo "Note: FIPS crypto policy configuration not applicable for Ubuntu"
+fi
