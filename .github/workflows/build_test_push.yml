@@ -34,8 +34,8 @@ jobs:
           - {name: "ubi8-openjdk-21", repo_name: "registry.redhat.io/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi-openjdk"}
           - {name: "ubi9-openjdk-17", repo_name: "registry.redhat.io/ubi9/openjdk-17", dockerfile: "Dockerfile.ubi-openjdk"}
           - {name: "ubi9-openjdk-21", repo_name: "registry.redhat.io/ubi9/openjdk-21", dockerfile: "Dockerfile.ubi-openjdk"}
-          - {name: "ubi9-dotnet-6", repo_name: "registry.redhat.io/ubi9/dotnet-60", dockerfile: "Dockerfile.ubi"}
-          - {name: "ubi9-dotnet-8", repo_name: "registry.redhat.io/ubi9/dotnet-80", dockerfile: "Dockerfile.ubi"}
+          - {name: "ubi9-dotnet-9", repo_name: "registry.redhat.io/ubi9/dotnet-90", dockerfile: "Dockerfile.ubi"}
+          - {name: "ubi9-dotnet-10", repo_name: "registry.redhat.io/ubi9/dotnet-100", dockerfile: "Dockerfile.ubi"}
 
           #UBUNTU BASE IMAGES
           - {name: "ubuntu-22.04", repo_name: "ubuntu:22.04", dockerfile: "Dockerfile.ubuntu"}
