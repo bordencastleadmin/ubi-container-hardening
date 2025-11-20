@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=registry.redhat.io/ubi8
+ARG BASE_IMAGE=python:3.11-slim-jammy
 FROM ${BASE_IMAGE}
 
 ARG COMPLIANCE_AS_CODE_VERSION=0.1.78
@@ -6,23 +6,21 @@ ENV COMPLIANCE_AS_CODE_VERSION=${COMPLIANCE_AS_CODE_VERSION}
 
 ENV BUILDER=/tmp/builder
 
-# Arguments for user restoration
-ARG FINAL_USER=1001
-ARG ORIGINAL_USER=0
-
-# Run hardening as root
-USER root
 RUN mkdir ${BUILDER}
 WORKDIR ${BUILDER}
 COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh
 RUN ${BUILDER}/install-dependencies.sh --version ${COMPLIANCE_AS_CODE_VERSION}
 
-COPY --chmod=0755 scripts/cleanup-dnf.sh ${BUILDER}/cleanup-dnf.sh
-RUN ${BUILDER}/cleanup-dnf.sh
+COPY --chmod=0755 scripts/cleanup-apt.sh ${BUILDER}/cleanup-apt.sh
+RUN ${BUILDER}/cleanup-apt.sh
 
 WORKDIR /
 
-# Create non-root user if needed (when original was root)
+# Arguments for user restoration
+ARG FINAL_USER=1001
+ARG ORIGINAL_USER=0
+
+# Create non-root user if needed and fix Python library ownership
 RUN if [ "${ORIGINAL_USER}" = "0" ]; then \
         echo "Checking if user ${FINAL_USER} exists"; \
         if ! id -u ${FINAL_USER} >/dev/null 2>&1; then \
@@ -33,6 +31,10 @@ RUN if [ "${ORIGINAL_USER}" = "0" ]; then \
         else \
             echo "User ${FINAL_USER} already exists, skipping creation"; \
         fi; \
+        echo "Fixing Python library ownership for user ${FINAL_USER}"; \
+        chown -R ${FINAL_USER}:${FINAL_USER} /usr/local/lib/python* 2>/dev/null || true; \
+        chown -R ${FINAL_USER}:${FINAL_USER} /usr/local/bin 2>/dev/null || true; \
+        chown -R ${FINAL_USER}:${FINAL_USER} /home/$(id -un ${FINAL_USER}) 2>/dev/null || true; \
     fi
 
 # Switch to final user

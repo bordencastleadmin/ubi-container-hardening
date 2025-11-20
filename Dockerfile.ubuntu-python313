@@ -1,0 +1,50 @@
+ARG BASE_IMAGE=ubuntu:24.04
+FROM ${BASE_IMAGE}
+
+ARG COMPLIANCE_AS_CODE_VERSION=0.1.78
+ENV COMPLIANCE_AS_CODE_VERSION=${COMPLIANCE_AS_CODE_VERSION}
+
+ENV BUILDER=/tmp/builder
+
+# Install Python 3.13 from deadsnakes PPA
+RUN apt-get update -y && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update -y && \
+    apt-get install -y python3.13 python3.13-venv python3-pip && \
+    ln -sf /usr/bin/python3.13 /usr/bin/python3 && \
+    ln -sf /usr/bin/python3.13 /usr/bin/python
+
+RUN mkdir ${BUILDER}
+WORKDIR ${BUILDER}
+COPY --chmod=0755 scripts/install-dependencies.sh ${BUILDER}/install-dependencies.sh
+RUN ${BUILDER}/install-dependencies.sh --version ${COMPLIANCE_AS_CODE_VERSION}
+
+COPY --chmod=0755 scripts/cleanup-apt.sh ${BUILDER}/cleanup-apt.sh
+RUN ${BUILDER}/cleanup-apt.sh
+
+WORKDIR /
+
+# Arguments for user restoration
+ARG FINAL_USER=1001
+ARG ORIGINAL_USER=0
+
+# Create non-root user if needed and fix Python library ownership
+RUN if [ "${ORIGINAL_USER}" = "0" ]; then \
+        echo "Checking if user ${FINAL_USER} exists"; \
+        if ! id -u ${FINAL_USER} >/dev/null 2>&1; then \
+            echo "Creating non-root user ${FINAL_USER}"; \
+            groupadd -g ${FINAL_USER} appuser 2>/dev/null || true; \
+            useradd -u ${FINAL_USER} -g appuser -m appuser 2>/dev/null || useradd -u ${FINAL_USER} -g ${FINAL_USER} -m appuser; \
+            chmod 700 /home/appuser; \
+        else \
+            echo "User ${FINAL_USER} already exists, skipping creation"; \
+        fi; \
+        echo "Fixing Python library ownership for user ${FINAL_USER}"; \
+        chown -R ${FINAL_USER}:${FINAL_USER} /usr/local/lib/python* 2>/dev/null || true; \
+        chown -R ${FINAL_USER}:${FINAL_USER} /usr/local/bin 2>/dev/null || true; \
+        chown -R ${FINAL_USER}:${FINAL_USER} /home/$(id -un ${FINAL_USER}) 2>/dev/null || true; \
+    fi
+
+# Switch to final user
+USER ${FINAL_USER}

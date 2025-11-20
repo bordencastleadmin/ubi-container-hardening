@@ -9,30 +9,43 @@ on:
 env:
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-  COMPLIANCE_AS_CODE_VERSION: "0.1.77"
+  COMPLIANCE_AS_CODE_VERSION: "0.1.78"
 
 jobs:
   build-test-push:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           #UBI BASE IMAGES
           - {name: "ubi8", repo_name: "registry.redhat.io/ubi8", dockerfile: "Dockerfile.ubi"}
-          #- {name: "ubi9", repo_name: "registry.redhat.io/ubi9", dockerfile: "Dockerfile.ubi"}
+          - {name: "ubi9", repo_name: "registry.redhat.io/ubi9", dockerfile: "Dockerfile.ubi"}
+          - {name: "ubi9-minimal", repo_name: "registry.redhat.io/ubi9-minimal", dockerfile: "Dockerfile.ubi"}
+          - {name: "ubi10", repo_name: "registry.redhat.io/ubi10/ubi", dockerfile: "Dockerfile.ubi"}
+          - {name: "ubi10-minimal", repo_name: "registry.redhat.io/ubi10/ubi-minimal", dockerfile: "Dockerfile.ubi"}
 
-          #UBI CI IMAGES
-          - {name: "ubi8-python-39", repo_name: "registry.redhat.io/ubi8/python-39", dockerfile: "Dockerfile.ubi-python"}
+          #UBI CI IMAGES - Python (3.11 only, 3.9 is EOL)
           - {name: "ubi8-python-311", repo_name: "registry.redhat.io/ubi8/python-311", dockerfile: "Dockerfile.ubi-python"}
-          #- {name: "ubi9-python-39", repo_name: "registry.redhat.io/ubi9/python-39", dockerfile: "Dockerfile.ubi-python"}
-          #- {name: "ubi9-python-311", repo_name: "registry.redhat.io/ubi9/python-311", dockerfile: "Dockerfile.ubi-python"}
+          - {name: "ubi9-python-311", repo_name: "registry.redhat.io/ubi9/python-311", dockerfile: "Dockerfile.ubi-python"}
           - {name: "ubi8-openjdk-17", repo_name: "registry.redhat.io/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi-openjdk"}
           - {name: "ubi8-openjdk-21", repo_name: "registry.redhat.io/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi-openjdk"}
-          #- {name: "ubi9-openjdk-17", repo_name: "registry.redhat.io/ubi8/openjdk-17", dockerfile: "Dockerfile.ubi-openjdk"}
-          #- {name: "ubi9-openjdk-21", repo_name: "registry.redhat.io/ubi8/openjdk-21", dockerfile: "Dockerfile.ubi-openjdk"}
+          - {name: "ubi9-openjdk-17", repo_name: "registry.redhat.io/ubi9/openjdk-17", dockerfile: "Dockerfile.ubi-openjdk"}
+          - {name: "ubi9-openjdk-21", repo_name: "registry.redhat.io/ubi9/openjdk-21", dockerfile: "Dockerfile.ubi-openjdk"}
+          - {name: "ubi9-dotnet-10", repo_name: "registry.redhat.io/ubi9/dotnet-100", dockerfile: "Dockerfile.ubi"}
+
+          #UBUNTU BASE IMAGES
+          - {name: "ubuntu-22.04", repo_name: "ubuntu:22.04", dockerfile: "Dockerfile.ubuntu"}
+          - {name: "ubuntu-24.04", repo_name: "ubuntu:24.04", dockerfile: "Dockerfile.ubuntu"}
+
+          #UBUNTU CI IMAGES - Python (using Ubuntu base + Python installation)
+          - {name: "ubuntu-python-311", repo_name: "ubuntu:22.04", dockerfile: "Dockerfile.ubuntu-python311"}
+          - {name: "ubuntu-python-312", repo_name: "ubuntu:24.04", dockerfile: "Dockerfile.ubuntu-python312"}
+          - {name: "ubuntu-python-313", repo_name: "ubuntu:24.04", dockerfile: "Dockerfile.ubuntu-python313"}
 
           #APPLICATION IMAGES
           #- {name: "jenkins-ubi9-openjdk-21", repo_name: "registry.redhat.io/ubi9/openjdk-21", dockerfile: "Dockerfile.jenkins"}
+          #- {name: "jenkins-ubi10-openjdk-21", repo_name: "registry.redhat.io/ubi10/openjdk-21", dockerfile: "Dockerfile.jenkins"}
     
     steps:
       - uses: actions/checkout@v4
@@ -60,13 +73,14 @@ jobs:
           echo "BASE_IMAGE=${{ matrix.repo_name }}"
           echo "COMPLIANCE_AS_CODE_VERSION=${{ env.COMPLIANCE_AS_CODE_VERSION }}"
           
-      - name: Build the Docker image
+      - name: Build the Docker image with dynamic user detection
         run: |
-          docker build . \
-            --file ${{ matrix.dockerfile }} \
-            --build-arg BASE_IMAGE="${{ matrix.repo_name }}" \
-            --build-arg COMPLIANCE_AS_CODE_VERSION="${{ env.COMPLIANCE_AS_CODE_VERSION }}" \
-            --tag "localbuild/${{ matrix.name }}:${{ env.VERSION }}"
+          chmod +x ./build-with-user-detection.sh
+          ./build-with-user-detection.sh \
+            -f "${{ matrix.dockerfile }}" \
+            -t "localbuild/${{ matrix.name }}:${{ env.VERSION }}" \
+            --base-image "${{ matrix.repo_name }}" \
+            --version "${{ env.COMPLIANCE_AS_CODE_VERSION }}"
 
       - name: Vulnerability scan image
         id: vulnerability-scan
@@ -81,6 +95,13 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ steps.vulnerability-scan.outputs.sarif }}
+
+      #- name: Run Goss User Validation Tests
+        #run: |
+          #chmod +x ./scripts/run-goss-tests.sh
+  #       ./scripts/run-goss-tests.sh \
+        #   --container "localbuild/${{ matrix.name }}:${{ env.VERSION }}" \
+        #    --container-name "${{ matrix.name }}"
 
       - name: Run OpenSCAP Scan with Script
         run: |

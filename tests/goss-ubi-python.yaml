@@ -1,0 +1,42 @@
+# Goss tests for UBI Python containers (should preserve original user 1001)
+# These containers have native Python users that should be preserved
+
+user:
+  "1001":
+    exists: true
+    groups:
+      - "1001"
+    home: "/opt/app-root/src"
+
+command:
+  "whoami returns 1001 user":
+    exec: "whoami"
+    exit-status: 0
+    stdout:
+      - "1001"
+
+  "current user id is 1001":
+    exec: "id -u"
+    exit-status: 0
+    stdout:
+      - "1001"
+
+  "not running as root":
+    exec: "test $(id -u) -ne 0"
+    exit-status: 0
+
+  "python is accessible":
+    exec: "python --version"
+    exit-status: 0
+
+  "pip is accessible":
+    exec: "pip --version"
+    exit-status: 0
+
+file:
+  "/opt/app-root/src":
+    exists: true
+    owner: "1001"
+    group: "1001"
+    mode: "0755"
+    filetype: "directory"

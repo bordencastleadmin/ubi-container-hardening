@@ -1,0 +1,61 @@
+# Goss tests for Ubuntu Python custom containers (should create appuser 1001)
+# These containers originally run as root, so we create non-root user 1001
+# Must also verify Python library ownership is correct
+
+user:
+  "appuser":
+    exists: true
+    uid: 1001
+    gid: 1001
+    groups:
+      - "appuser"
+    home: "/home/appuser"
+
+command:
+  "whoami returns appuser":
+    exec: "whoami"
+    exit-status: 0
+    stdout:
+      - "appuser"
+
+  "current user id is 1001":
+    exec: "id -u"
+    exit-status: 0
+    stdout:
+      - "1001"
+
+  "not running as root":
+    exec: "test $(id -u) -ne 0"
+    exit-status: 0
+
+  "python is accessible":
+    exec: "python --version"
+    exit-status: 0
+
+  "pip is accessible":
+    exec: "pip --version"
+    exit-status: 0
+
+  "can install python package as non-root":
+    exec: "pip install --user requests"
+    exit-status: 0
+
+  "appuser owns home directory":
+    exec: "ls -ld /home/appuser"
+    exit-status: 0
+    stdout:
+      - "/appuser.*appuser/"
+
+file:
+  "/home/appuser":
+    exists: true
+    owner: "appuser"
+    group: "appuser"
+    mode: "0700"
+    filetype: "directory"
+
+  "/usr/local/bin":
+    exists: true
+    owner: "appuser"
+    group: "appuser"
+    filetype: "directory"

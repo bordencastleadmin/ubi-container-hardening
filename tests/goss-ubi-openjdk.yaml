@@ -1,0 +1,47 @@
+# Goss tests for UBI OpenJDK containers (should preserve original jboss user)
+# These containers have native jboss user that should be preserved
+
+user:
+  "jboss":
+    exists: true
+    uid: 185
+    gid: 185
+    groups:
+      - "jboss"
+      - "root"
+    home: "/home/jboss"
+
+command:
+  "whoami returns jboss":
+    exec: "whoami"
+    exit-status: 0
+    stdout:
+      - "jboss"
+
+  "current user id is 185":
+    exec: "id -u"
+    exit-status: 0
+    stdout:
+      - "185"
+
+  "not running as root":
+    exec: "test $(id -u) -ne 0"
+    exit-status: 0
+
+  "java is accessible":
+    exec: "java -version"
+    exit-status: 0
+
+  "jboss user owns home directory":
+    exec: "ls -ld /home/jboss"
+    exit-status: 0
+    stdout:
+      - "/jboss.*jboss.*jboss/"
+
+file:
+  "/home/jboss":
+    exists: true
+    owner: "jboss"
+    group: "jboss"
+    mode: "0755"
+    filetype: "directory"
