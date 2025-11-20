@@ -131,13 +131,13 @@ elif [ "$OS_TYPE" = "ubuntu" ]; then
             PYTHON_CMD="python3"
             PLAYBOOK_PATH="ansible/ubuntu2204-playbook-stig.yml"
             ANSIBLE_VERSION="ansible==8.6.0"
-            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd"
+            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,accounts_logon_fail_delay"
             ;;
         24.04)
             PYTHON_CMD="python3"
             PLAYBOOK_PATH="ansible/ubuntu2404-playbook-stig.yml"
             ANSIBLE_VERSION="ansible==8.6.0"
-            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd"
+            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,accounts_logon_fail_delay"
             ;;
         *)
             echo "Error: Unsupported Ubuntu version: $OS_VERSION"
