@@ -38,5 +38,5 @@ file:
     exists: true
     owner: "appuser"
     group: "appuser"
-    mode: "0755"
+    mode: "0700"
     filetype: "directory"
