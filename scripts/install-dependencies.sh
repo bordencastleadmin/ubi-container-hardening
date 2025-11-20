@@ -89,7 +89,7 @@ if [ "$OS_TYPE" = "rhel" ]; then
             PYTHON_CMD="python3.11"
             PLAYBOOK_PATH="ansible/rhel8-playbook-stig.yml"
             ANSIBLE_VERSION="ansible==7.4.0"
-            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-08-040110"
+            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-08-040110,package_libreswan_installed"
             if [ "$MICRODNF_DETECTED" = true ]; then
                 SKIP_TAGS="$SKIP_TAGS,CCE-80935-0,CCE-85897-7,CCE-85899-3"
             fi
@@ -99,7 +99,7 @@ if [ "$OS_TYPE" = "rhel" ]; then
             PYTHON_CMD="python3"
             PLAYBOOK_PATH="ansible/rhel9-playbook-stig.yml"
             ANSIBLE_VERSION="ansible==8.6.0"
-            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-09-040110"
+            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-09-040110,package_libreswan_installed"
             if [ "$MICRODNF_DETECTED" = true ]; then
                 SKIP_TAGS="$SKIP_TAGS,CCE-80935-0,CCE-85897-7,CCE-85899-3"
             fi
@@ -109,7 +109,7 @@ if [ "$OS_TYPE" = "rhel" ]; then
             PYTHON_CMD="python3"
             PLAYBOOK_PATH="ansible/rhel10-playbook-stig.yml"
             ANSIBLE_VERSION="ansible==8.6.0"
-            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-10-040110"
+            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-10-040110,package_libreswan_installed"
             if [ "$MICRODNF_DETECTED" = true ]; then
                 SKIP_TAGS="$SKIP_TAGS,CCE-80935-0,CCE-85897-7,CCE-85899-3"
             fi
