@@ -62,7 +62,12 @@ if [ "$OS_TYPE" = "rhel" ]; then
         if command -v microdnf &> /dev/null; then
             MICRODNF_DETECTED=true
             echo "microdnf detected, installing dnf"
-            microdnf update -y
+            # Create cache directory and set permissions
+            mkdir -p /var/cache/yum/metadata
+            chmod 755 /var/cache/yum/metadata
+            # Clean and update microdnf cache first
+            microdnf clean all
+            microdnf update -y --refresh
             microdnf install -y dnf
             echo "dnf installed successfully"
         else
