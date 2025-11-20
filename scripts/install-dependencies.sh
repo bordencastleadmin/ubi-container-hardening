@@ -62,9 +62,9 @@ if [ "$OS_TYPE" = "rhel" ]; then
         if command -v microdnf &> /dev/null; then
             MICRODNF_DETECTED=true
             echo "microdnf detected, installing dnf"
-            # Create cache directory and set permissions
-            mkdir -p /var/cache/yum/metadata
-            chmod 755 /var/cache/yum/metadata
+            # Create cache directory and set permissions (ignore if already exists)
+            mkdir -p /var/cache/yum/metadata || true
+            chmod 755 /var/cache/yum/metadata 2>/dev/null || true
             # Clean and update microdnf cache first
             microdnf clean all
             microdnf update -y --refresh
@@ -114,7 +114,7 @@ if [ "$OS_TYPE" = "rhel" ]; then
             PYTHON_CMD="python3"
             PLAYBOOK_PATH="ansible/rhel10-playbook-stig.yml"
             ANSIBLE_VERSION="ansible==8.6.0"
-            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-10-040110,package_libreswan_installed"
+            SKIP_TAGS="sudo_remove_no_authenticate,sudo_remove_nopasswd,sudoers_default_includedir,sudo_require_reauthentication,sudoers_validate_passwd,package_rng-tools_installed,enable_authselect,DISA-STIG-RHEL-10-040110,package_libreswan_installed,configure_crypto_policy"
             if [ "$MICRODNF_DETECTED" = true ]; then
                 SKIP_TAGS="$SKIP_TAGS,CCE-80935-0,CCE-85897-7,CCE-85899-3"
             fi
